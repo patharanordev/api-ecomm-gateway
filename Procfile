@@ -1,0 +1,1 @@
+web: sh -c 'cd ./gateway/ && npm run start'
