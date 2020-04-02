@@ -92,7 +92,7 @@ app.prepare()
 
     // Bring this statement to last-1 statement to receive page name
     // by refer to 'pages' directory.
-    server.get('*', (req, res) => {
+    server.get('*', cslg.ensureLoggedIn('/login/facebook'), (req, res) => {
         return handle(req, res);
     })
 
