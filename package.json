@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "local": "export NODE_ENV=local && node server",
     "dev": "export NODE_ENV=development && node server",
-    "prod": "export NODE_ENV=production && node server"
+    "prod": "export NODE_ENV=production && next build && next start",
+    "start": "npm run dev"
   },
   "author": "PatharaNor",
   "license": "ISC",
