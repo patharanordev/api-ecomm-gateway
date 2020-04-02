@@ -19,7 +19,7 @@ const port = process.env.PORT || 3000;
 passport.use(new FacebookStrategy({
         clientID: process.env.FACEBOOK_APP_ID,
         clientSecret: process.env.FACEBOOK_APP_SECRET,
-        callbackURL: `http://localhost:${port}/auth/facebook/callback`
+        callbackURL: `${process.env.HOST}/auth/facebook/callback`
     },
     function(accessToken, refreshToken, profile, cb) {
         console.log('Access token : ', accessToken);
