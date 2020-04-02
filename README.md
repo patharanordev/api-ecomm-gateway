@@ -1,27 +1,26 @@
-# **API for Authentication with Facebook passport.js**
+# **eComm API Gateway**
 
-Providing Facebook authentication channel via OAuth2 protocol with Node.js.
+Simple API gateway, handling authentication via Facebook passportjs with Node.js.
 
-## **Dependencies**
+## **Main Dependencies**
 
-```js
-const express = require('express');
-const bodyParser = require('body-parser');
-const session = require('express-session');
-const cookieParser = require('cookie-parser');
-const serveStatic = require('serve-static');
-const cslg = require('connect-ensure-login');
-const path = require('path');
-const passport = require('passport');
-const FacebookStrategy = require('passport-facebook').Strategy;
-```
+ - `express`
+ - `body-parser`
+ - `express-session`
+ - `cookie-parser`
+ - `serve-static`
+ - `connect-ensure-login`
+ - `passport`, `passport-facebook`
+ - `next`, `react`, `redux`
 
 ## **Facebook Passport**
 
-
-**Set passport strategy**
+### **Set Facebook strategy to passport**
 
 ```js
+
+const FacebookStrategy = require('passport-facebook').Strategy;
+
 //...
 
 passport.use(new FacebookStrategy({
@@ -41,7 +40,7 @@ passport.use(new FacebookStrategy({
 ));
 ```
 
-**Configure Passport authenticated session persistence**
+### **Configure Passport authenticated session persistence**
 
 ```js
 passport.serializeUser(function(user, cb) {
@@ -53,7 +52,7 @@ passport.deserializeUser(function(obj, cb) {
 });
 ```
 
-**Prepare passport session**
+### **Prepare passport session**
 
 ```js
 app.use(passport.initialize());
@@ -87,3 +86,58 @@ app.get('/profile',
     }
 );
 ```
+
+## **Dockerize**
+
+### **Build process** 
+
+ 1. Update `apk` on `node:12.16.1-alpine3.9`
+ 2. Set `--no-cache` 
+ 3. Install `openssl`, `tzdata`
+ 4. Set time zone to `Asia/Bangkok`
+ 5. Install service dependencies via `npm` 
+
+### **Build an image**
+
+```bash
+$ docker build -t patharanor/api-ecomm-gateway:SPECIAL_TAG .
+```
+### **Environment**
+
+ - `FACEBOOK_APP_ID` - client ID of your Facebook App
+ - `FACEBOOK_APP_SECRET` - client secret of your Facebook App
+ - `HOST` - host/instance that provides the service
+ - `PORT` - port number of the service
+ - `SESSION_SECRET_KEY` - any word
+
+### **Run the image**
+
+Bind port to outsite(left) via port number `3000`.
+
+```bash
+$ docker run \
+-p 3000:3000 \
+-e FACEBOOK_APP_ID=YOUR_FACEBOOK_APP_ID \
+-e FACEBOOK_APP_SECRET=YOUR_FACEBOOK_APP_SECRET \
+-e HOST=YOUR_HOST \
+-e PORT=3000 \
+-e SESSION_SECRET_KEY=YOUR_SESSION_SECRET_KEY \
+patharanor/api-ecomm-gateway:SPECIAL_TAG
+```
+
+### **Push to DockerHub**
+
+Login to DockerHub
+
+```bash
+$ docker login
+```
+
+Push it
+```bash
+$ docker push patharanor/api-ecomm-gateway:SPECIAL_TAG
+```
+
+## **License**
+
+MIT
