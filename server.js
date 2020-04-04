@@ -45,6 +45,11 @@ passport.deserializeUser(function(obj, cb) {
 const next = require('next');
 const clientRoutes = require('./routes');
 const app = next({ dev });
+// const clientRouteHandler = clientRoutes.getRequestHandler(app, ({req, res, route, query}) => {
+//     console.log('in handler - user:', req.user)
+//     app.render(req, res, route.page, { user:req.user?req.user:null })
+// });
+
 const clientRouteHandler = clientRoutes.getRequestHandler(app);
 
 app.prepare()
@@ -76,7 +81,7 @@ app.prepare()
     server.get('/auth/facebook/callback',
         passport.authenticate('facebook', { 
             failureRedirect: '/login/facebook',
-            successRedirect: '/profile'
+            successRedirect: '/dashboard'
         })
     );
     server.get('/return', 
@@ -94,7 +99,10 @@ app.prepare()
     // Bring this statement to last-1 statement to receive page name
     // by refer to 'pages' directory.
     server.get('/dashboard', cslg.ensureLoggedIn('/login/facebook'), (req, res) => {
-        return handle(req, res);
+        console.log('in get - user:', req.user);
+        // return clientRouteHandler(req, res);
+        
+        return app.render(req, res, '/dashboard', { user:req.user })
     })
 
     // Allow server using routes handler from 'nextjs' app (client)

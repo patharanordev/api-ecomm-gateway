@@ -18,6 +18,7 @@ import Link from '@material-ui/core/Link';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import NotificationsIcon from '@material-ui/icons/Notifications';
+import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import { mainListItems, secondaryListItems } from './listItems';
 import Chart from './Chart';
 import Deposits from './Deposits';
@@ -106,7 +107,9 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Dashboard() {
+export default function Dashboard(props) {
+  const { currentUser } = props;
+
   const classes = useStyles();
   const [open, setOpen] = React.useState(true);
   const handleDrawerOpen = () => {
@@ -116,6 +119,8 @@ export default function Dashboard() {
     setOpen(false);
   };
   const fixedHeightPaper = clsx(classes.paper, classes.fixedHeight);
+
+  // console.log(props);
 
   return (
     <div className={classes.root}>
@@ -138,6 +143,12 @@ export default function Dashboard() {
             <Badge badgeContent={4} color="secondary">
               <NotificationsIcon />
             </Badge>
+          </IconButton>
+          <IconButton color="inherit">
+            <Typography variant="body2" color="inherit" noWrap className={classes.title}>
+              {currentUser && currentUser.displayName ? `${currentUser.displayName}` : ''}
+            </Typography>
+            <AccountCircleIcon style={{ marginLeft:'10px' }}/>
           </IconButton>
         </Toolbar>
       </AppBar>
