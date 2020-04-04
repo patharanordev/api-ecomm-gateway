@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
@@ -42,8 +43,9 @@ passport.deserializeUser(function(obj, cb) {
 });
 
 const next = require('next');
+const clientRoutes = require('./routes');
 const app = next({ dev });
-const handle = app.getRequestHandler();
+const clientRouteHandler = clientRoutes.getRequestHandler(app);
 
 app.prepare()
 .then(() => {
@@ -51,6 +53,7 @@ app.prepare()
     // Config middleware
     const server = express();
 
+    // app.use(cors())
     server.use(bodyParser.json())
     server.use(bodyParser.urlencoded({ extended: true }))
     server.use(cookieParser());
@@ -72,7 +75,7 @@ app.prepare()
     server.get('/login/facebook', passport.authenticate('facebook'));
     server.get('/auth/facebook/callback',
         passport.authenticate('facebook', { 
-            failureRedirect: '/login',
+            failureRedirect: '/login/facebook',
             successRedirect: '/profile'
         })
     );
@@ -82,9 +85,7 @@ app.prepare()
             res.redirect('/');
         }
     );
-    server.get('/profile',
-        cslg.ensureLoggedIn(),
-        function(req, res){
+    server.get('/profile', cslg.ensureLoggedIn(), function(req, res){
             // "req" came from callback(cb) in FacebookStrategy
             res.send(req.user);
         }
@@ -92,9 +93,12 @@ app.prepare()
 
     // Bring this statement to last-1 statement to receive page name
     // by refer to 'pages' directory.
-    server.get('*', cslg.ensureLoggedIn('/login/facebook'), (req, res) => {
+    server.get('/dashboard', cslg.ensureLoggedIn('/login/facebook'), (req, res) => {
         return handle(req, res);
     })
+
+    // Allow server using routes handler from 'nextjs' app (client)
+    server.use(clientRouteHandler);
 
     server.listen(port, (err) => {
         if (err) throw err
