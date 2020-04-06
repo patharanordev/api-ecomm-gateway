@@ -53,7 +53,7 @@ export default function SignIn() {
           className={classes.submit}
           onClick={() => window.location.href = '/login/google'}
         >
-          Sign In with Facebook
+          Sign In with Google
         </Button>
       </div>
       <Box mt={8}>
