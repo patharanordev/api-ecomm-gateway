@@ -24,7 +24,7 @@ import Chart from './Chart';
 import Deposits from './Deposits';
 import Orders from './Orders';
 
-import Copyright from '../Copyright';
+import Copyright from '../CopyRight';
 
 const drawerWidth = 240;
 
