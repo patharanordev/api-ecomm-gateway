@@ -12,7 +12,7 @@ class DatabaseHandler {
                 dialect: 'postgres',
                 dialectOptions: {
                     // Default
-                    ssl: process.env.NODE_ENV=='production' ? true : false
+                    ssl: process.env.NODE_ENV=='local' ? false : true
                 }
             });
             // console.log(this.sequelize);
