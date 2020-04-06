@@ -3,7 +3,7 @@ import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 
-import Copyright from '../components/Copyright';
+import Copyright from '../components/CopyRight';
 
 export default function About() {
   return (
