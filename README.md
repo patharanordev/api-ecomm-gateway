@@ -38,6 +38,10 @@ passport.use(new GoogleStrategy({
 ));
 ```
 
+### Credential for Google API
+
+To get `GOOGLE_APP_ID` and `GOOGLE_APP_SECRET`, you must login to Google Cloud Platform to create your project first and then the credential. Please refer to this link https://console.developers.google.com/apis/credentials
+
 ### **Configure Passport authenticated session persistence**
 
 ```js
@@ -116,6 +120,11 @@ $ docker run \
 -e HOST=YOUR_HOST \
 -e PORT=3000 \
 -e SESSION_SECRET_KEY=YOUR_SESSION_SECRET_KEY \
+-e DB_USER=ekx...cc \
+-e DB_PASS=90078c...........................fa87e226cd \
+-e DB_HOST=ec2...................aws.com \
+-e DB_PORT=5432 \
+-e DB_NAME=da..........of2 \
 patharanor/api-ecomm-gateway:SPECIAL_TAG
 ```
 
