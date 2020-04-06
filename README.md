@@ -1,6 +1,6 @@
 # **eComm API Gateway**
 
-Simple API gateway, handling authentication via Facebook passportjs with Node.js.
+Simple API gateway, handling authentication via Google passportjs with Node.js.
 
 ## **Main Dependencies**
 
@@ -10,31 +10,29 @@ Simple API gateway, handling authentication via Facebook passportjs with Node.js
  - `cookie-parser`
  - `serve-static`
  - `connect-ensure-login`
- - `passport`, `passport-facebook`
+ - `passport`, `passport-google-oauth2`
  - `next`, `react`, `redux`
 
-## **Facebook Passport**
+## **Google Passport**
 
-### **Set Facebook strategy to passport**
+### **Set Google strategy to passport**
 
 ```js
 
-const FacebookStrategy = require('passport-facebook').Strategy;
+const GoogleStrategy = require( 'passport-google-oauth2' ).Strategy;
 
 //...
 
-passport.use(new FacebookStrategy({
-        clientID: process.env.FACEBOOK_APP_ID,
-        clientSecret: process.env.FACEBOOK_APP_SECRET,
-        callbackURL: `http://localhost:${port}/auth/facebook/callback`
+passport.use(new GoogleStrategy({
+        clientID: process.env.GOOGLE_APP_ID,
+        clientSecret: process.env.GOOGLE_APP_SECRET,
+        callbackURL: `${process.env.HOST}/auth/google/callback`, 
+        enableProof: true
     },
     function(accessToken, refreshToken, profile, cb) {
         console.log('Access token : ', accessToken);
         console.log('Refresh token : ', refreshToken);
         console.log('Profile : ', profile);
-        // User.findOrCreate({ facebookId: profile.id }, function (err, user) {
-        //     return cb(err, user);
-        // });
         cb(null, profile)
     }
 ));
@@ -64,25 +62,21 @@ app.use(passport.session());
 **Create simple auth endpoint**
 
 ```js
-app.get('/login/facebook', passport.authenticate('facebook'));
-app.get('/auth/facebook/callback',
-    passport.authenticate('facebook', { failureRedirect: '/login' }),
-    function(req, res) {
-        // Successful authentication, redirect home.
-        res.redirect('/');
-    }
+app.get('/login/google', 
+    passport.authenticate('google', { 
+        scope: [ 'https://www.googleapis.com/auth/plus.login',
+            , 'https://www.googleapis.com/auth/plus.profile.emails.read' 
+        ]
+    })
 );
-app.get('/return', 
-    passport.authenticate('facebook', { failureRedirect: '/login' }), 
-    function(req, res) {
-        res.redirect('/');
-    }
+app.get('/auth/google/callback',
+    passport.authenticate('google', { 
+        failureRedirect: '/login/google',
+        successRedirect: '/dashboard'
+    })
 );
-app.get('/profile',
-    cslg.ensureLoggedIn(),
-    function(req, res){
-        // "req" came from callback(cb) in FacebookStrategy
-        res.render('profile', { user: req.user });
+app.get('/profile', cslg.ensureLoggedIn(), function(req, res){
+        res.send(req.user);
     }
 );
 ```
@@ -104,8 +98,8 @@ $ docker build -t patharanor/api-ecomm-gateway:SPECIAL_TAG .
 ```
 ### **Environment**
 
- - `FACEBOOK_APP_ID` - client ID of your Facebook App
- - `FACEBOOK_APP_SECRET` - client secret of your Facebook App
+ - `GOOGLE_APP_ID` - client ID of your Google App
+ - `GOOGLE_APP_SECRET` - client secret of your Google App
  - `HOST` - host/instance that provides the service
  - `PORT` - port number of the service
  - `SESSION_SECRET_KEY` - any word
@@ -117,8 +111,8 @@ Bind port to outsite(left) via port number `3000`.
 ```bash
 $ docker run \
 -p 3000:3000 \
--e FACEBOOK_APP_ID=YOUR_FACEBOOK_APP_ID \
--e FACEBOOK_APP_SECRET=YOUR_FACEBOOK_APP_SECRET \
+-e GOOGLE_APP_ID=YOUR_GOOGLE_APP_ID \
+-e GOOGLE_APP_SECRET=YOUR_GOOGLE_APP_SECRET \
 -e HOST=YOUR_HOST \
 -e PORT=3000 \
 -e SESSION_SECRET_KEY=YOUR_SESSION_SECRET_KEY \

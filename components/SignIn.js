@@ -51,7 +51,7 @@ export default function SignIn() {
           variant="contained"
           color="primary"
           className={classes.submit}
-          onClick={() => window.location.href = '/login/facebook'}
+          onClick={() => window.location.href = '/login/google'}
         >
           Sign In with Facebook
         </Button>
