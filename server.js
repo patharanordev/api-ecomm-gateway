@@ -7,7 +7,7 @@ const serveStatic = require('serve-static');
 const cslg = require('connect-ensure-login');
 const path = require('path');
 const passport = require('passport');
-const FacebookStrategy = require('passport-facebook').Strategy;
+const GoogleStrategy = require( 'passport-google-oauth2' ).Strategy;
 
 const dev = process.env.NODE_ENV !== 'production';
 if(dev) {   
@@ -19,19 +19,16 @@ const port = process.env.PORT || 3000;
 const { sequelize, models } = require('./sequelize/db-handler');
 
 // Set passport strategy
-passport.use(new FacebookStrategy({
-        clientID: process.env.FACEBOOK_APP_ID,
-        clientSecret: process.env.FACEBOOK_APP_SECRET,
-        callbackURL: `${process.env.HOST}/auth/facebook/callback`, 
+passport.use(new GoogleStrategy({
+        clientID: process.env.GOOGLE_APP_ID,
+        clientSecret: process.env.GOOGLE_APP_SECRET,
+        callbackURL: `${process.env.HOST}/auth/google/callback`, 
         enableProof: true
     },
     function(accessToken, refreshToken, profile, cb) {
         console.log('Access token : ', accessToken);
         console.log('Refresh token : ', refreshToken);
         console.log('Profile : ', profile);
-        // User.findOrCreate({ facebookId: profile.id }, function (err, user) {
-        //     return cb(err, user);
-        // });
         cb(null, profile)
     }
 ));
@@ -130,19 +127,22 @@ app.prepare()
         }
     });
 
-    // Define routes.
-    // server.get('/', function(req, res) { res.render('home', { user: req.user }); });
-    // server.get('/login', function(req, res){ res.render('login'); });
-    server.get('/login/facebook', passport.authenticate('facebook'));
-    server.get('/auth/facebook/callback',
-        passport.authenticate('facebook', { 
-            failureRedirect: '/login/facebook',
+    server.get('/login/google', 
+        passport.authenticate('google', { 
+            scope: [ 'https://www.googleapis.com/auth/plus.login',
+                , 'https://www.googleapis.com/auth/plus.profile.emails.read' 
+            ]
+        })
+    );
+    server.get('/auth/google/callback',
+        passport.authenticate('google', { 
+            failureRedirect: '/login/google',
             successRedirect: '/dashboard'
         })
     );
 
     server.get('/return', 
-        passport.authenticate('facebook', { failureRedirect: '/login' }), 
+        passport.authenticate('google', { failureRedirect: '/login' }), 
         function(req, res) {
             res.redirect('/');
         }
@@ -155,7 +155,7 @@ app.prepare()
 
     // Bring this statement to last-1 statement to receive page name
     // by refer to 'pages' directory.
-    server.get('/dashboard', cslg.ensureLoggedIn('/login/facebook'), (req, res) => {
+    server.get('/dashboard', cslg.ensureLoggedIn('/login/google'), (req, res) => {
         console.log('in get - user:', req.user);
         // return clientRouteHandler(req, res);
         
