@@ -1,12 +1,12 @@
 import React from 'react';
 import MenuComponent from '../components/menu/Menu';
-import DashboardComponent from '../components/dashboard/Dashboard';
+import ProductGalleryComponent from '../components/CopyRight';
 import { connect } from 'react-redux';
 
-class Dashboard extends React.Component {
+class ProductGallery extends React.Component {
   static getInitialProps({ store, isServer, pathname, query:{ user } }) {
     if(user) {
-      console.log('Dashboard got response : ', user)
+      console.log('ProductGallery got response : ', user)
       store.dispatch({ type:'CURRENT_USER', payload:user });
       // return { currentUser:user }
     }
@@ -17,10 +17,10 @@ class Dashboard extends React.Component {
     return (
       <MenuComponent 
         currentUser={currentUser}
-        title='Dashboard'
-        content={<DashboardComponent />}/>
+        title='Product Gallery'
+        content={<ProductGalleryComponent />}/>
     )
   }
 }
 
-export default connect(state => state)(Dashboard);
+export default connect(state => state)(ProductGallery);

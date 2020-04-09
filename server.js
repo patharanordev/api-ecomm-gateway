@@ -66,9 +66,8 @@ const modelNameMapping = (name) => {
     switch(name) {
         case 'user': modelName = 'User'; break;
         case 'payment': modelName = 'Payment'; break;
-        case 'product_a': modelName = 'Product_A'; break;
-        case 'product_b': modelName = 'Product_B'; break;
-        case 'product_c': modelName = 'Product_C'; break;
+        case 'product_smartphone': modelName = 'ProductSmartphone'; break;
+        case 'product_laptop': modelName = 'ProductLaptop'; break;
         case 'product_categories': modelName = 'ProductCategories'; break;
         default: break;
     }
@@ -106,6 +105,7 @@ app.prepare()
                     case 'create': responseHandler(theModel.add(req.body.data), `/api/v1/${req.params.name}`, res); break;
                     case 'delete': responseHandler(theModel.delete(req.body.id), `/api/v1/${req.params.name}`, res); break;
                     case 'drop': responseHandler(theModel.dropTable(), `/api/v1/${req.params.name}`, res); break;
+                    case 'update': responseHandler(theModel.set(req.body.update), `/api/v1/${req.params.name}`, res); break;
                     case 'access': {
                         if(req.params.name) {
                             responseHandler(theModel.setLastAccess(req.body.id), `/api/v1/${req.params.name}`, res); 
@@ -160,6 +160,12 @@ app.prepare()
         // return clientRouteHandler(req, res);
         
         return app.render(req, res, '/dashboard', { user:req.user })
+    })
+    server.get('/product-gallery', cslg.ensureLoggedIn('/login/google'), (req, res) => {
+        console.log('in get - user:', req.user);
+        // return clientRouteHandler(req, res);
+        
+        return app.render(req, res, '/product-gallery', { user:req.user })
     })
 
     // Allow server using routes handler from 'nextjs' app (client)

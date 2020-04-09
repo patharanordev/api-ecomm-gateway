@@ -2,9 +2,8 @@ const {
     User,
     ProductCategories,
     Payment,
-    Product_A,
-    Product_B,
-    Product_C 
+    ProductSmartphone,
+    ProductLaptop,
 } = require('./models/index');
 const DatabaseAPIs = require('./apis/database');
 
@@ -22,9 +21,8 @@ const sequelize = db.sequelize;
 User.initModel(sequelize);
 ProductCategories.initModel(sequelize);
 Payment.initModel(sequelize);
-Product_A.initModel(sequelize);
-Product_B.initModel(sequelize);
-Product_C.initModel(sequelize);
+ProductSmartphone.initModel(sequelize);
+ProductLaptop.initModel(sequelize);
 
 module.exports = {
     sequelize,
@@ -32,8 +30,7 @@ module.exports = {
         User,
         ProductCategories,
         Payment,
-        Product_A,
-        Product_B,
-        Product_C
+        ProductSmartphone,
+        ProductLaptop
     }
 }

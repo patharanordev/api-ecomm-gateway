@@ -20,6 +20,7 @@ class DatabaseHandler {
                     keepAlive: true,        
                 },      
                 ssl: true,
+                // logging: false
             });
             // console.log(this.sequelize);
         } catch(err) {
