@@ -226,7 +226,7 @@ export default function Menu(props) {
                 <Grid item xs={12}>
                 {
                     /** Page content here */
-                    props.content ? props.content : null
+                    props.children
                 }
                 </Grid>
             </Grid>

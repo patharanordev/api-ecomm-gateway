@@ -15,10 +15,9 @@ class Dashboard extends React.Component {
   render() {
     const { currentUser } = this.props;
     return (
-      <MenuComponent 
-        currentUser={currentUser}
-        title='Dashboard'
-        content={<DashboardComponent />}/>
+      <MenuComponent currentUser={currentUser} title='Dashboard'>
+        <DashboardComponent />
+      </MenuComponent>
     )
   }
 }

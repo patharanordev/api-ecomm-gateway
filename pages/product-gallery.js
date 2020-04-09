@@ -15,10 +15,9 @@ class ProductGallery extends React.Component {
   render() {
     const { currentUser } = this.props;
     return (
-      <MenuComponent 
-        currentUser={currentUser}
-        title='Product Gallery'
-        content={<ProductGalleryComponent />}/>
+      <MenuComponent currentUser={currentUser} title='Product Gallery'>
+        <ProductGalleryComponent />
+      </MenuComponent>
     )
   }
 }
