@@ -1,10 +1,10 @@
 const { Model, DataTypes } = require('sequelize');
 
-class User extends Model {}
+class ProductLaptop extends Model {}
 
-User._sequelize = null;
+ProductLaptop._sequelize = null;
 
-User.isSequelized = function() {
+ProductLaptop.isSequelized = function() {
     return new Promise((resolve, reject) => {
         try {
             if(this._sequelize!=null) {
@@ -15,22 +15,32 @@ User.isSequelized = function() {
     })
 }
 
-User.initModel = function(sequelize) {
+ProductLaptop.initModel = function(sequelize) {
     this._sequelize = sequelize;
     this.init({
-        user_id: {
-            type: DataTypes.STRING, 
+        model: {
+            type: DataTypes.STRING,
             allowNull: false,
             primaryKey: true,
             unique: true
         },
-        username: { type: DataTypes.STRING, allowNull: false },
-        email: { type: DataTypes.STRING, allowNull: false },
-        last_access: { type: DataTypes.DATE, allowNull: false }
-    }, { sequelize: this._sequelize, modelName: 'user' });
+        category_id: { type: DataTypes.STRING, allowNull: false },
+        url_image: { type: DataTypes.STRING, allowNull: false },
+        brand: { type: DataTypes.STRING },
+        version: { type: DataTypes.STRING },
+        color: { type: DataTypes.STRING },
+        price: { type: DataTypes.REAL },
+        screen: { type: DataTypes.STRING },
+        cpu: { type: DataTypes.STRING },
+        processor: { type: DataTypes.STRING },
+        memory: { type: DataTypes.STRING },
+        graphic: { type: DataTypes.STRING },
+        storage: { type: DataTypes.STRING },
+        storage_type: { type: DataTypes.STRING }
+    }, { sequelize: this._sequelize, modelName: 'product_laptop' });
 }
 
-User.get = function(searchCondition, searchOption=null) {
+ProductLaptop.get = function(searchCondition, searchOption=null) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
@@ -51,7 +61,7 @@ User.get = function(searchCondition, searchOption=null) {
     
 }
 
-User.set = function(updateObj) {
+ProductLaptop.set = function(updateObj) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
@@ -65,51 +75,50 @@ User.set = function(updateObj) {
     
 }
 
-User.setLastAccess = function(user_id) {
+ProductLaptop.add = function(newProduct) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(user_id) {
-                this.update({ last_access: new Date() }, { where: { user_id:user_id } })
+            if(newProduct && newProduct.items) {
+
+                const items = Array.isArray(newProduct.items) ? newProduct.items : [];
+                let bulkItems = [];
+                
+                items.map((o,i) => {
+                    bulkItems.push({
+                        model: o.model ? o.model : '',
+                        category_id: o.category_id ? o.category_id : '',
+                        url_image: o.url_image ? o.url_image : '',
+                        brand: o.brand ? o.brand : '',
+                        version: o.version ? o.version : '',
+                        color: o.color ? o.color : '',
+                        price: o.price ? o.price : '',
+                        screen: o.screen ? o.screen : '',
+                        cpu: o.cpu ? o.cpu : '',
+                        processor: o.processor ? o.processor : '',
+                        memory: o.memory ? o.memory : '',
+                        graphic: o.graphic ? o.graphic : '',
+                        storage: o.storage ? o.storage : '',
+                        storage_type: o.storage_type ? o.storage_type : ''
+                    })
+                });
+
+                this.bulkCreate(bulkItems, { returning: ['model'], ignoreDuplicates:true })
                 .then((r) => resolve(r))
                 .catch((err) => reject(err));
-            } else { reject('Unknown user id') }
+
+            } else { reject('Unknown product info object pattern.') }
         }).catch((err) => reject(err));
     })
     
 }
 
-User.add = function(newUser) {
+ProductLaptop.delete = function(model) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(newUser && newUser.user_id) {
-                this.findAndCountAll({ where: { user_id:newUser.user_id } })
-                .then((isExist) => {
-                    if(!(isExist.count && isExist.count > 0 ? true : false)) { 
-                        this.create({
-                            user_id: newUser.user_id,
-                            username: newUser.username ? newUser.username : '',
-                            email: newUser.email ? newUser.email : '',
-                            last_access: new Date()
-                        }).then((r) => resolve(r)) 
-                    } else { 
-                        reject('Data existing...')
-                    }
-                })
-                .catch((err) => reject(err)); 
-            } else { reject('Unknown user info object pattern.') }
-        }).catch((err) => reject(err));
-    })
-    
-}
-
-User.delete = function(user_id) {
-
-    return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
-            if(user_id) {
-                this.destroy({ where : { user_id:user_id } })
+            if(model) {
+                this.destroy({ where : { model:model } })
                 .then((r) => resolve(r && r > 0 ? 'Deleted.' : 'No record was deleted.'))
                 .catch((err) => reject(err));
             } else { reject('Unknown the id') }
@@ -118,7 +127,7 @@ User.delete = function(user_id) {
     
 }
 
-User.dropTable = function() {
+ProductLaptop.dropTable = function() {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
@@ -129,7 +138,7 @@ User.dropTable = function() {
     
 }
 
-User.clearData = function() {
+ProductLaptop.clearData = function() {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
@@ -140,4 +149,4 @@ User.clearData = function() {
     
 }
 
-module.exports = User;
+module.exports = ProductLaptop;

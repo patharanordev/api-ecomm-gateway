@@ -13,8 +13,9 @@
   "author": "PatharaNor",
   "license": "ISC",
   "dependencies": {
-    "@material-ui/core": "latest",
+    "@material-ui/core": "^4.9.9",
     "@material-ui/icons": "^4.9.1",
+    "@material-ui/lab": "^4.0.0-alpha.48",
     "axios": "^0.19.2",
     "body-parser": "^1.19.0",
     "clsx": "latest",
