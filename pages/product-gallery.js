@@ -1,6 +1,6 @@
 import React from 'react';
 import MenuComponent from '../components/menu/Menu';
-import ProductGalleryComponent from '../components/CopyRight';
+import ProductGalleryComponent from '../components/product-gallery/ImageGallery';
 import { connect } from 'react-redux';
 
 class ProductGallery extends React.Component {
