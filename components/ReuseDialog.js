@@ -39,17 +39,18 @@ export default function ReuseDialog(props) {
           </DialogContentText>
 
           {
-            props.form && props.form.column && Array.isArray(props.form.column)
+            props.form
             ? 
               (
-                props.form.column.map((o,i) => {
+                Object.keys(props.form).map((o,i) => {
                   return (
-                    <TextField autoFocus margin="dense" fullWidth
-                      id={o.id ? o.id : ''} 
-                      label={o.label ? o.label : ''} 
+                    <TextField 
+                      key={`form-col-idx-${i}`}
+                      margin="dense" autoFocus fullWidth
+                      id={o} label={o} 
                       value={
-                        props.form.value && props.form.value.hasOwnProperty(o.id)
-                        ? props.form.value[o.id] 
+                        props.form && props.form.hasOwnProperty(o)
+                        ? props.form[o] 
                         : ''
                       }
                       onChange={(e) => {

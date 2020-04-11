@@ -106,8 +106,11 @@ const filterByAttr = (attrs) => {
   });
 }
 
-export default function ImageGallery() {
+export default function ImageGallery(props) {
   const classes = useStyles();
+
+  // const tileData = props.data;
+  console.log(props.data)
 
   const [isOpenDialog, setDialog] = React.useState(false);
   const handleDialog = () => {
@@ -231,10 +234,7 @@ export default function ImageGallery() {
       <ReuseDialog 
         isOpen={isOpenDialog} 
         content={null}
-        form={{
-          column:jsonForm,
-          value:selectedProduct
-        }}
+        form={selectedProduct}
         onClose={(isOpen) => { setDialog(isOpen) }}
         onOK={(data) => {
           console.log('On dialog save : ', data);
