@@ -16,6 +16,9 @@ const reducer = ( state = { foo:'' }, action) => {
         case 'CHANGE_STORE_VALUE':
             return { ...state, foo:action.payload };
 
+        case 'CURRENT_USER':
+            return { ...state, currentUser:action.payload };
+
         default:
             return state;
     }

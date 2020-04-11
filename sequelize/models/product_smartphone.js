@@ -1,10 +1,10 @@
 const { Model, DataTypes } = require('sequelize');
 
-class Product_A extends Model {}
+class ProductSmartphone extends Model {}
 
-Product_A._sequelize = null;
+ProductSmartphone._sequelize = null;
 
-Product_A.isSequelized = function() {
+ProductSmartphone.isSequelized = function() {
     return new Promise((resolve, reject) => {
         try {
             if(this._sequelize!=null) {
@@ -15,27 +15,25 @@ Product_A.isSequelized = function() {
     })
 }
 
-Product_A.initModel = function(sequelize) {
+ProductSmartphone.initModel = function(sequelize) {
     this._sequelize = sequelize;
     this.init({
-        product_id: {
+        model: {
             type: DataTypes.STRING,
             allowNull: false,
             primaryKey: true,
             unique: true
         },
-        model: { type: DataTypes.STRING, allowNull: false },
         category_id: { type: DataTypes.STRING, allowNull: false },
         url_image: { type: DataTypes.STRING, allowNull: false },
-        attr_a_1: { type: DataTypes.STRING },
-        attr_a_2: { type: DataTypes.STRING },
-        attr_a_3: { type: DataTypes.STRING },
-        attr_a_4: { type: DataTypes.STRING },
-        attr_a_5: { type: DataTypes.STRING }
-    }, { sequelize: this._sequelize, modelName: 'product_a' });
+        brand: { type: DataTypes.STRING },
+        version: { type: DataTypes.STRING },
+        color: { type: DataTypes.STRING },
+        price: { type: DataTypes.REAL }
+    }, { sequelize: this._sequelize, modelName: 'product_smartphone' });
 }
 
-Product_A.get = function(searchCondition, searchOption=null) {
+ProductSmartphone.get = function(searchCondition, searchOption=null) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
@@ -56,46 +54,66 @@ Product_A.get = function(searchCondition, searchOption=null) {
     
 }
 
-Product_A.add = function(newUser) {
+ProductSmartphone.set = function(updateObj) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(newUser && newUser.user_id) {
-                this.findAndCountAll({ where: { user_id:newUser.user_id } })
-                .then((isExist) => {
-                    if(!(isExist.count && isExist.count > 0 ? true : false)) { 
-                        this.create({
-                            user_id: newUser.user_id,
-                            username: newUser.username ? newUser.username : '',
-                            email: newUser.email ? newUser.email : '',
-                            last_access: new Date()
-                        }).then((r) => resolve(r)) 
-                    } else { 
-                        reject('Data existing...')
-                    }
-                })
-                .catch((err) => reject(err)); 
-            } else { reject('Unknown user info object pattern.') }
+            if(updateObj.condition && updateObj.data) {
+                this.update(updateObj.data, { where:updateObj.condition })
+                .then((r) => resolve(r))
+                .catch((err) => reject(err));
+            } else { reject('Unknown condition or data') }
         }).catch((err) => reject(err));
     })
     
 }
 
-Product_A.delete = function(user_id) {
+ProductSmartphone.add = function(newProduct) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(user_id) {
-                this.destroy({ where : { user_id:user_id } })
+            if(newProduct && newProduct.items) {
+
+                const items = Array.isArray(newProduct.items) ? newProduct.items : [];
+                let bulkItems = [];
+                
+                items.map((o,i) => {
+                    bulkItems.push({
+                        model: o.model ? o.model : '',
+                        category_id: o.category_id ? o.category_id : '',
+                        url_image: o.url_image ? o.url_image : '',
+                        brand: o.brand ? o.brand : '',
+                        version: o.version ? o.version : '',
+                        color: o.color ? o.color : '',
+                        price: o.price ? o.price : ''
+                    })
+                });
+
+                this.bulkCreate(bulkItems, { returning: ['model'], ignoreDuplicates:true })
+                .then((r) => resolve(r))
+                .catch((err) => reject(err));
+                
+            } else { reject('Unknown product info object pattern.') }
+        }).catch((err) => reject(err));
+    })
+    
+}
+
+ProductSmartphone.delete = function(model) {
+
+    return new Promise((resolve, reject) => {
+        this.isSequelized().then(() => {
+            if(model) {
+                this.destroy({ where : { model:model } })
                 .then((r) => resolve(r && r > 0 ? 'Deleted.' : 'No record was deleted.'))
                 .catch((err) => reject(err));
-            } else { reject('Unknown user id') }
+            } else { reject('Unknown the id') }
         }).catch((err) => reject(err));
     })
     
 }
 
-Product_A.dropTable = function() {
+ProductSmartphone.dropTable = function() {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
@@ -106,7 +124,7 @@ Product_A.dropTable = function() {
     
 }
 
-Product_A.clearData = function() {
+ProductSmartphone.clearData = function() {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
@@ -117,4 +135,4 @@ Product_A.clearData = function() {
     
 }
 
-module.exports = Product_A;
+module.exports = ProductSmartphone;
