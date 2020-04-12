@@ -14,8 +14,10 @@ import ReuseDialog from '../ReuseDialog';
 import Paper from '@material-ui/core/Paper';
 import Checkboxes from './Checkboxes';
 import Combobox from './Combobox';
+import axios from 'axios';
+import Loading from '../Loading';
 
-import tileData from './tileData';
+// import tileData from './tileData';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -38,6 +40,11 @@ const useStyles = makeStyles((theme) => ({
     overflow: 'auto',
     flexDirection: 'column',
   },
+  attrList: {
+    width: '100%',
+    height: '300px',
+    overflowY: 'auto'
+  }
 }));
 
 const jsonForm = [
@@ -46,202 +53,287 @@ const jsonForm = [
   { id:'price', label:'Price' }
 ];
 
-const getCategory = () => {
-  return [
-    { id:'1', name:'smartphone', title:'Smartphone' },
-    { id:'2', name:'laptop', title:'Laptop' }
-  ]
-};
+class ImageGalleryComponent extends React.Component {
 
-const getAttributes = () => {
-  // TODO: in getAttributes()
-  // - calling to API instead or receive via props
-  //   or change logic
-  let attrArr = [];
+  constructor(props) {
+    super(props)
 
-  // Ex.
-  let attrList = { 
-    type: { // 'type' is attribute name
-      // 'any-attr-value' : always 'false' in initial state 
+    this.state = {
+      isOpenDialog: false,
+      categories: [],
+      products: [],
+      attrList: [],
+
+      selectedProduct: null,
+      selectedAttr: {},
+      checkFilter: true,
+      filter: [],
+
+      isWaiting: true
     }
-  };
+  }
 
-  tileData.map((o,i) => {
-    if(attrArr.indexOf(o.type)==-1) {
-      attrArr.push(o.type);
-      attrList.type[o.type] = false;
-    }
-  });
-  return { attrArr:attrArr, attrList:attrList };
-};
+  handlerFilterByType(attrs) {
+    console.log('attrs : ', attrs);
+    this.setState({ checkFilter:false }, () => {
+      setTimeout(() => {
+        this.setState({ filter:this.filterByAttr(attrs) }, () => {
+          this.setState({ checkFilter:true })
+        });
+      }, 300);
+    })
+  }
 
-const filterByAttr = (attrs) => {
-  // TODO: in filterByAttr()
-  // - calling to API instead or receive via props
-  //   or change logic
+  handleDialog() {
+    if(this.state.isOpenDialog) this.setState({ isOpenDialog:false });
+    else this.setState({ isOpenDialog:true });
+  }
 
-  // Ex. attrs
-  // {
-  //   attr-name: [
-  //     0:attr-value,
-  //     1; ....
-  //   ]
-  // }
+  getAttributes() {
+    // Ex.
+    let attrList = { 
+      // type: {   // 'type' is attribute name
+      //           // 'any-attr-value' : always 'false' in initial state 
+      // }
+    };
 
-  let focusAttrs = Object.keys(attrs);
-  return tileData.filter((o,i) => {
-    let isMatched = true;
+    if(this.state.products && this.state.products.length>0) {
+      let attrNames = Object.keys(this.state.products[0]);
 
-    focusAttrs.map((attrName, attrNameIndex) => {
-      if(o.hasOwnProperty(attrName)) {
-        isMatched = attrs[attrName].indexOf(o[attrName])>-1 ? true : attrs[attrName].length==0 ? true : false
-        return isMatched;
-      } else {
-        isMatched = false;
-        return isMatched;
-      }
-    });
-
-    return isMatched
-  });
-}
-
-export default function ImageGallery(props) {
-  const classes = useStyles();
-
-  // const tileData = props.data;
-  console.log(props.data)
-
-  const [isOpenDialog, setDialog] = React.useState(false);
-  const handleDialog = () => {
-    if(isOpenDialog) setDialog(false);
-    else setDialog(true);
-  };
-
-  let { attrArr, attrList } = getAttributes();
-
-  const [selectedProduct, setSelectProduct] = React.useState(null);
-  const [selectedAttr, setSelectAttr] = React.useState({});
-  const [checkFilter, setCheckFilter] = React.useState(true);
-  const [filter, setFilter] = React.useState(tileData);
-  const handlerFilterByType = (attrs) => {
-    console.log(attrs);
-    setCheckFilter(false)
-    setTimeout(() => {
-      setFilter(filterByAttr(attrs));
-      setCheckFilter(true)
-    }, 300);
-  };
-
-  React.useEffect(() => {
-    if(selectedProduct) {
-      handleDialog()
-    }
-  }, [selectedProduct])
-
-  return (
-
-    <>
-      <Grid container spacing={3}>
-
-        <Grid item xs={12}>
-          {/* <Paper className={classes.paper}> */}
-            <Typography variant="body1">
-              <strong>Categories</strong>
-            </Typography>
-            <br/>
-            <Combobox itemList={getCategory()} onChange={(selected) => {
-              console.log('Selected item in combobox :', selected);
-              // Default value is getCategory()[0]
-            }}/>
-          {/* </Paper> */}
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Paper className={classes.paper}>
-            <Typography variant="body1">
-              <strong>Filter by attribute</strong>
-            </Typography>
-            <br />
-
-            {
-              Object.keys(attrList).map((attrName, attrObjIndex) => {
-                return (
-                  <Checkboxes 
-                    key={`checkbox-idx-${attrObjIndex}`}
-                    title={attrName.toUpperCase()} attrs={attrList[attrName]} onSelect={(k,v) => {
-                    if(v) {
-                      if(!selectedAttr.hasOwnProperty(attrName)) {
-                        selectedAttr[attrName] = [];
-                      }
-                      selectedAttr[attrName].push(k);
-                    } else {
-                      if(selectedAttr.hasOwnProperty(attrName)) {
-                        let tmpIdx = selectedAttr[attrName].indexOf(k);
-                        if(tmpIdx>-1) selectedAttr[attrName].splice(tmpIdx, 1)
-                      }
-                    }
-                    setSelectAttr(selectedAttr)
-                    handlerFilterByType(selectedAttr);
-                  }}/>
-                )
-              })
+      this.state.products.map((o,i) => {
+        attrNames.map((attrName, attrNameIndex) => {
+          try {
+            if(!attrList.hasOwnProperty(attrName)) {
+              attrList[attrName] = {}
             }
-          </Paper>
-        </Grid>
 
-        <Grid item xs={12} md={8}>
-          <Paper className={classes.paper}>
-            <GridList cellHeight={180} className={classes.gridList} cols={3}>
-              {
-                filter && Array.isArray(filter)
-                ? 
-                  filter.map((tile, i) => (
-                    <Grow
-                      key={`grow-idx-${i}`}
-                      in={checkFilter}
-                      style={{ transformOrigin: '0 0 0' }}
-                      {...(checkFilter ? { timeout: 1000 } : {})}
-                    >
-                      <GridListTile key={`gridlist-idx-${i}`}>
-                        <img src={tile.img} alt={tile.title} />
-                        <GridListTileBar
-                          title={tile.title}
-                          subtitle={<span>by: {tile.author}</span>}
-                          actionIcon={
-                            <IconButton 
-                              aria-label={`info about ${tile.title}`} 
-                              className={classes.icon}
-                              onClick={() => { 
-                                console.log('On click edit product:', tile.data)
-                                setSelectProduct(tile.data)
-                              }}>
-                              <EditIcon />
-                            </IconButton>
-                          }
-                        />
-                      </GridListTile>
-                    </Grow>
-                  ))
-                : null
-              }
-            </GridList>
-          </Paper>
-        </Grid>
+            attrList[attrName][o[attrName]] = false;
 
-      </Grid>
+          } catch (err) {
+            console.warn('Get attribute warning : ', err);
+          }
+        })
+      });
+    }
 
-      <ReuseDialog 
-        isOpen={isOpenDialog} 
-        content={null}
-        form={selectedProduct}
-        onClose={(isOpen) => { setDialog(isOpen) }}
-        onOK={(data) => {
-          console.log('On dialog save : ', data);
-          setDialog(false)
-        }}
-      />
+    console.log('attrList:', attrList)
     
-    </>
-  );
+    return attrList
+  }
+
+  filterByAttr(attrs) {
+    let focusAttrs = Object.keys(attrs);
+    return this.state.products.filter((o,i) => {
+      let isMatched = 0;
+
+      focusAttrs.map((attrName, attrNameIndex) => {
+        if(o.hasOwnProperty(attrName)) {
+
+          attrs[attrName].indexOf( typeof o[attrName]==='number' ? o[attrName].toString() : o[attrName]) >-1 
+          ? isMatched++ 
+          : null
+          
+        } 
+      });
+
+      return isMatched > 0 ? true : false
+    });
+  }
+
+  getProductByName(name, callback) {
+    const url = `/api/v1/product_${name}`;
+    const data = { "method":"select", "condition": {} };
+    axios({
+      method:'POST', url:url, data:data
+    }).then((r) => {
+      console.log('product url:', url)
+      console.log('product:', r.data)
+      if(!r.data.error) {
+        this.setState({ products:r.data.data }, () => {
+          if(typeof callback === 'function') {
+            callback()
+          }
+        })
+      }
+    })
+  }
+
+  getCategoryList(callback) {
+    const url = `/api/v1/product_categories`;
+    const data = { "method":"select", "condition": {} };
+    axios({
+      method:'POST', url:url, data:data
+    }).then((r) => {
+      console.log('categories url:', url)
+      console.log('categories:', r.data)
+      if(!r.data.error) {
+        this.setState({ categories:r.data.data }, () => {
+          if(typeof callback === 'function') {
+            callback()
+          }
+        })
+      }
+    })
+  }
+
+  fetchProduct(productName){
+    this.setState({ isWaiting:true }, () => {
+      this.getProductByName(productName, () => {
+        this.setState({ attrList:this.getAttributes() })
+        this.setState({ filter:this.state.products }, () => {
+          this.setState({ isWaiting:false })
+        })
+      })
+    })
+  }
+
+  componentDidMount() {
+    this.getCategoryList(() => {
+      if(this.state.categories) {
+        console.log('initial category : ', this.state.categories[1].name)
+        this.fetchProduct(this.state.categories[1].name)
+      }
+    })
+  }
+
+  render() {
+    const { classes } = this.props;
+    let { categories, attrList, filter, isWaiting } = this.state;
+
+    console.log('render categories : ', categories)
+    console.log('render attrList : ', attrList)
+    console.log('render filter :', filter)
+
+    if(!isWaiting) {
+      return (
+        <>
+          <Grid container spacing={3}>
+
+            <Grid item xs={12}>
+              {/* <Paper className={classes.paper}> */}
+                <Typography variant="body1">
+                  <strong>Categories</strong>
+                </Typography>
+                <br/>
+                <Combobox itemList={categories ? categories : []} onChange={(selected) => {
+                  console.log('Selected item in combobox :', selected);
+                  // Default value is getCategory()[0]
+                  if(selected && selected.name){
+                    this.fetchProduct(selected.name)
+                  }
+                }}/>
+              {/* </Paper> */}
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Paper className={classes.paper}>
+                <Typography variant="body1">
+                  <strong>Simple Filter by attribute</strong>
+                  <br/>
+                  <small>Using <strong>'OR'</strong> condition to filter it.</small>
+                </Typography>
+                <br />
+                <div className={classes.attrList}>
+                {
+                  attrList
+                  ? 
+                    Object.keys(attrList).map((attrName, attrObjIndex) => {
+                      console.log(attrName);
+                      return (
+                        <Checkboxes 
+                          key={`checkbox-idx-${attrObjIndex}`}
+                          title={attrName.toUpperCase()} attrs={attrList[attrName]} onSelect={(k,v) => {
+                            let selectedAttr = this.state.selectedAttr;
+                            if(v) {
+                              if(!selectedAttr.hasOwnProperty(attrName)) {
+                                selectedAttr[attrName] = [];
+                              }
+                              selectedAttr[attrName].push(k);
+                            } else {
+                              if(selectedAttr.hasOwnProperty(attrName)) {
+                                let tmpIdx = selectedAttr[attrName].indexOf(k);
+                                if(tmpIdx>-1) selectedAttr[attrName].splice(tmpIdx, 1)
+                              }
+                            }
+                            this.setState({ selectedAttr:selectedAttr })
+                            this.handlerFilterByType(selectedAttr);
+                          }}/>
+                      )
+                    })
+
+                  : null
+                }
+                </div>
+              </Paper>
+            </Grid>
+
+            <Grid item xs={12} md={8}>
+              <Paper className={classes.paper}>
+                <GridList cellHeight={180} className={classes.gridList} cols={3}>
+                  {
+                    filter && Array.isArray(filter)
+                    ? 
+                      filter.map((tile, i) => (
+                        <Grow
+                          key={`grow-idx-${i}`}
+                          in={this.state.checkFilter}
+                          style={{ transformOrigin: '0 0 0' }}
+                          {...(this.state.checkFilter ? { timeout: 1000 } : {})}
+                        >
+                          <GridListTile key={`gridlist-idx-${i}`}>
+                            <img src={tile.url_image} alt={tile.model} />
+                            <GridListTileBar
+                              title={`Model : ${tile.model}`}
+                              subtitle={<span>Price : {tile.price}</span>}
+                              actionIcon={
+                                <IconButton 
+                                  aria-label={`info about ${tile.model}`} 
+                                  className={classes.icon}
+                                  onClick={() => { 
+                                    console.log('On click edit product:', tile)
+                                    this.setState({ selectedProduct:tile }, () => {
+                                      this.handleDialog()
+                                    });
+                                  }}>
+                                  <EditIcon />
+                                </IconButton>
+                              }
+                            />
+                          </GridListTile>
+                        </Grow>
+                      ))
+                    : null
+                  }
+                </GridList>
+              </Paper>
+            </Grid>
+
+          </Grid>
+
+          <ReuseDialog 
+            isOpen={this.state.isOpenDialog} 
+            content={null}
+            form={this.state.selectedProduct}
+            onClose={(isOpen) => { this.setState({ isOpenDialog:isOpen }) }}
+            onOK={(data) => {
+              console.log('On dialog save : ', data);
+              this.setState({ isOpenDialog:false })
+            }}
+          />
+        
+        </>
+      );
+    } else {
+      return (
+        <Loading />
+      )
+    }
+  }
 }
+
+export default function ImageGallery() {
+  const classes = useStyles();
+  return (
+    <ImageGalleryComponent classes={classes}/>
+  )
+};

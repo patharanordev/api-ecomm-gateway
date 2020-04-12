@@ -1,8 +1,14 @@
 const { Model, DataTypes } = require('sequelize');
+const uuid = require('uuid');
 
 class User extends Model {}
 
 User._sequelize = null;
+
+User.getUUID = function(namespace) {
+    // Create ID from namespace at current timestamp
+    return uuid.v5(namespace, uuid.v1());
+}
 
 User.isSequelized = function() {
     return new Promise((resolve, reject) => {
@@ -83,14 +89,14 @@ User.add = function(newUser) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(newUser && newUser.user_id) {
-                this.findAndCountAll({ where: { user_id:newUser.user_id } })
+            if(newUser && newUser.email) {
+                this.findAndCountAll({ where: { email:newUser.email } })
                 .then((isExist) => {
                     if(!(isExist.count && isExist.count > 0 ? true : false)) { 
                         this.create({
-                            user_id: newUser.user_id,
+                            user_id: this.getUUID(newUser.email),
                             username: newUser.username ? newUser.username : '',
-                            email: newUser.email ? newUser.email : '',
+                            email: newUser.email,
                             last_access: new Date()
                         }).then((r) => resolve(r)) 
                     } else { 

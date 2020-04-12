@@ -12,35 +12,47 @@ class ProductGallery extends React.Component {
       store.dispatch({ type:'CURRENT_USER', payload:user });
       // return { currentUser:user }
 
-      const product = await this.getProductByName('smartphone');
-      return { product:product }
+      // const categories = await this.getCategoryList();
+      // const product = await this.getProductByName(categories.data[1].name);
+
+      // console.log('product : ', product)
+      // return { 
+      //   categories:categories.data ? categories.data : [], 
+      //   product:product.data ? product.data : []
+      // }
     }
   }
 
-  static async getProductByName(name) {
+  static async fetch(url, data) {
     let res = { error:null, data:null };
     try {
-      const url = `https://api-ecomm-gateway.herokuapp.com/api/v1/product_${name}`;
-      const data = {
-        "method":"select",
-        "condition": { }
-      };
-
       const response = await axios.post(url, data);
       res.data = response.data.data;
     } catch (error) {
       res.error = error;
     }
 
-    // console.log('product:', res);
+    // console.log('fetch :', res);
     return res;
   }
 
+  static async getProductByName(name) {
+    const url = `${process.env.API_HOST}/api/v1/product_${name}`;
+    const data = { "method":"select", "condition": {} };
+    return await this.fetch(url, data);
+  }
+
+  static async getCategoryList() {
+    const url = `${process.env.API_HOST}/api/v1/product_categories`;
+    const data = { "method":"select", "condition": {} };
+    return await this.fetch(url, data);
+  }
+
   render() {
-    let { currentUser, product } = this.props;
+    let { currentUser } = this.props;
     return (
       <MenuComponent currentUser={currentUser} title='Product Gallery'>
-        <ProductGalleryComponent data={product}/>
+        <ProductGalleryComponent/>
       </MenuComponent>
     )
   }

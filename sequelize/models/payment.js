@@ -1,8 +1,14 @@
 const { Model, DataTypes } = require('sequelize');
+const uuid = require('uuid');
 
 class Payment extends Model {}
 
 Payment._sequelize = null;
+
+Payment.getUUID = function(namespace) {
+    // Create ID from namespace at current timestamp
+    return uuid.v5(namespace, uuid.v1());
+}
 
 Payment.isSequelized = function() {
     return new Promise((resolve, reject) => {
@@ -81,15 +87,16 @@ Payment.add = function(newPayment) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(newPayment && newPayment.order_id && newPayment.user_id && newPayment.items) {
+            if(newPayment && newPayment.user_id && newPayment.items) {
 
+                const orderId = this.getUUID(newPayment.user_id);
                 const items = Array.isArray(newPayment.items) ? newPayment.items : [];
                 const ts = new Date();
                 let bulkItems = [];
                 
                 items.map((o,i) => {
                     bulkItems.push({
-                        order_id: newPayment.order_id,
+                        order_id: orderId,
                         timestamp: ts,
                         user_id: newPayment.user_id,
                         product_id: o.product_id,
