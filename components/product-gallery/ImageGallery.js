@@ -17,7 +17,11 @@ import Combobox from './Combobox';
 import axios from 'axios';
 import Loading from '../Loading';
 
+import RESTFul from '../../helper/RESTFul';
+
 // import tileData from './tileData';
+
+const rFul = RESTFul();
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -47,12 +51,6 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const jsonForm = [
-  { id:'model', label:'Model' },
-  { id:'name', label:'Product name' },
-  { id:'price', label:'Price' }
-];
-
 class ImageGalleryComponent extends React.Component {
 
   constructor(props) {
@@ -64,6 +62,7 @@ class ImageGalleryComponent extends React.Component {
       products: [],
       attrList: [],
 
+      selectedCategory: null,
       selectedProduct: null,
       selectedAttr: {},
       checkFilter: true,
@@ -140,44 +139,50 @@ class ImageGalleryComponent extends React.Component {
     });
   }
 
+  updateProductByModel(categoryName, model, updateObj, callback) {
+    const url = `/api/v1/product_${categoryName}`;
+    const data = {
+      "method":"update",
+      "update": {
+        "condition": { "model": model },
+        "data": updateObj
+      }
+    };
+    rFul.post(url, data, (err, data) => {
+      if(typeof callback === 'function') {
+        let isSuccess = (data && Array.isArray(data) && data.length>0);
+        let reason = (isSuccess && data[0]>0) ? `Updated ${data[0]} row(s)` : 'Not row updated'
+        callback(err, reason);
+      }
+    });
+  }
+
   getProductByName(name, callback) {
     const url = `/api/v1/product_${name}`;
     const data = { "method":"select", "condition": {} };
-    axios({
-      method:'POST', url:url, data:data
-    }).then((r) => {
-      console.log('product url:', url)
-      console.log('product:', r.data)
-      if(!r.data.error) {
-        this.setState({ products:r.data.data }, () => {
-          if(typeof callback === 'function') {
-            callback()
-          }
+    rFul.post(url, data, (err, data) => {
+      if(!err) {
+        this.setState({ products:data }, () => {
+          if(typeof callback === 'function') { callback() }
         })
       }
-    })
+    });
   }
 
   getCategoryList(callback) {
     const url = `/api/v1/product_categories`;
     const data = { "method":"select", "condition": {} };
-    axios({
-      method:'POST', url:url, data:data
-    }).then((r) => {
-      console.log('categories url:', url)
-      console.log('categories:', r.data)
-      if(!r.data.error) {
-        this.setState({ categories:r.data.data }, () => {
-          if(typeof callback === 'function') {
-            callback()
-          }
+    rFul.post(url, data, (err, data) => {
+      if(!err) {
+        this.setState({ categories:data }, () => {
+          if(typeof callback === 'function') { callback() }
         })
       }
-    })
+    });
   }
 
   fetchProduct(productName){
-    this.setState({ isWaiting:true }, () => {
+    this.setState({ isWaiting:true, selectedCategory:productName }, () => {
       this.getProductByName(productName, () => {
         this.setState({ attrList:this.getAttributes() })
         this.setState({ filter:this.state.products }, () => {
@@ -189,7 +194,7 @@ class ImageGalleryComponent extends React.Component {
 
   componentDidMount() {
     this.getCategoryList(() => {
-      if(this.state.categories) {
+      if(this.state.categories && Array.isArray(this.state.categories) && this.state.categories.length > 0) {
         console.log('initial category : ', this.state.categories[1].name)
         this.fetchProduct(this.state.categories[1].name)
       }
@@ -198,7 +203,10 @@ class ImageGalleryComponent extends React.Component {
 
   render() {
     const { classes } = this.props;
-    let { categories, attrList, filter, isWaiting } = this.state;
+    let { 
+      categories, attrList, filter, isWaiting, 
+      selectedProduct, selectedCategory 
+    } = this.state;
 
     console.log('render categories : ', categories)
     console.log('render attrList : ', attrList)
@@ -313,11 +321,25 @@ class ImageGalleryComponent extends React.Component {
           <ReuseDialog 
             isOpen={this.state.isOpenDialog} 
             content={null}
-            form={this.state.selectedProduct}
+            form={selectedProduct}
             onClose={(isOpen) => { this.setState({ isOpenDialog:isOpen }) }}
             onOK={(data) => {
               console.log('On dialog save : ', data);
-              this.setState({ isOpenDialog:false })
+
+              // Normalize data
+              this.updateProductByModel(selectedCategory, data.model, data.data, () => {
+                this.setState({ isOpenDialog:false })
+              })
+            }}
+            optimize={(data) => {
+              let model = null;
+              if(data) {
+                model = data.model ? data.model : null;
+                delete data['model'];
+                delete data['createdAt'];
+                delete data['updatedAt'];
+              }
+              return { model:model, data:data }
             }}
           />
         
