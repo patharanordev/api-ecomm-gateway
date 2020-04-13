@@ -16,6 +16,11 @@ export default class eCommAdminDocument extends Document {
       <html lang="en">
         <Head>
 
+          <title>eCommAdmin</title>
+
+          {/* Step 5: Output the styles in the head  */}
+          {this.props.styles}
+
           { /* Facebook Analytic */ }
           <script dangerouslySetInnerHTML={{__html: `
             window.fbAsyncInit = function() {
@@ -79,19 +84,26 @@ eCommAdminDocument.getInitialProps = async (ctx) => {
   // 4. page.render
 
   // Render app and page and get the context of the page with collected side effects.
+
+  // Step 1: Create an instance of ServerStyleSheet
   const sheets = new ServerStyleSheets();
   const originalRenderPage = ctx.renderPage;
 
+  // Step 2: Retrieve styles from components in the page
   ctx.renderPage = () =>
     originalRenderPage({
       enhanceApp: (App) => (props) => sheets.collect(<App {...props} />),
     });
 
+  // Step 3: Extract the styles as <style> tags
+  const styleTags = sheets.getStyleElement()
+
   const initialProps = await Document.getInitialProps(ctx);
 
+  // Step 4: Pass styleTags as a prop
   return {
     ...initialProps,
     // Styles fragment is rendered after the app and page rendering finish.
-    styles: [...React.Children.toArray(initialProps.styles), sheets.getStyleElement()],
+    styles: [...React.Children.toArray(initialProps.styles), styleTags],
   };
 };
