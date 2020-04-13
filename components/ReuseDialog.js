@@ -9,7 +9,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 
 export default function ReuseDialog(props) {
 
-  const [form, setForm] = React.useState(props.form);
+  const [form, setForm] = React.useState({});
   const [open, setOpen] = React.useState(props.isOpen);
 
   const handleClickCancel = () => {
@@ -19,14 +19,25 @@ export default function ReuseDialog(props) {
   };
 
   const handleClickOK = () => {
+    let optimizeData = null
+    
+    console.log('original form:', form)
+    if(typeof props.optimize === 'function') {
+      optimizeData = props.optimize(form)
+      console.log('optimize form:', optimizeData)
+    } else {
+      optimizeData = form
+    }
+
     if(typeof props.onOK === 'function') {
-      props.onOK(form);
+      props.onOK(optimizeData);
     }
   };
 
   return (
       <Dialog 
         open={props.isOpen} 
+        onEnter={() => { setForm(props.form) }}
         onClose={() => { props.onClose ? props.onClose() : null }} 
         aria-labelledby="form-dialog-title">
 
@@ -39,25 +50,21 @@ export default function ReuseDialog(props) {
           </DialogContentText>
 
           {
-            props.form && props.form.column && Array.isArray(props.form.column)
+            form
             ? 
               (
-                props.form.column.map((o,i) => {
+                Object.keys(form).map((o,i) => {
                   return (
-                    <TextField autoFocus margin="dense" fullWidth
-                      id={o.id ? o.id : ''} 
-                      label={o.label ? o.label : ''} 
-                      value={
-                        props.form.value && props.form.value.hasOwnProperty(o.id)
-                        ? props.form.value[o.id] 
-                        : ''
-                      }
+                    <TextField 
+                      key={`form-col-idx-${i}`}
+                      margin="dense" autoFocus fullWidth
+                      id={o} label={o} 
+                      value={form[o]}
                       onChange={(e) => {
-                        if(!form[i].value) {
-                          form[i]['value'] = '';
-                        }
-                        form[i].value = e.target.value;
-                        setForm(form)
+                        console.log('form on change :', form)
+                        console.log('form on change e.target.id:', e.target.id)
+                        console.log('form on change e.target.value:', e.target.value)
+                        setForm({ ...form, [e.target.id]: e.target.value })
                       }}
                     />
                   )

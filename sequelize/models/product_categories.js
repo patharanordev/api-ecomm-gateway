@@ -1,8 +1,14 @@
 const { Model, DataTypes } = require('sequelize');
+const uuid = require('uuid');
 
 class ProductCategories extends Model {}
 
 ProductCategories._sequelize = null;
+
+ProductCategories.getUUID = function(namespace) {
+    // Create ID from namespace at current timestamp
+    return uuid.v5(namespace, uuid.v1());
+}
 
 ProductCategories.isSequelized = function() {
     return new Promise((resolve, reject) => {
@@ -25,6 +31,7 @@ ProductCategories.initModel = function(sequelize) {
             unique: true
         },
         name: { type: DataTypes.STRING, allowNull: false },
+        title: { type: DataTypes.STRING, allowNull: false },
         description: { type: DataTypes.STRING, allowNull: false },
         url_manual: { type: DataTypes.STRING, allowNull: false },
         last_update: { type: DataTypes.DATE, allowNull: false }
@@ -74,8 +81,11 @@ ProductCategories.add = function(newCategory) {
                 this.findAndCountAll({ where: { name:newCategory.name } })
                 .then((isExist) => {
                     if(!(isExist.count && isExist.count > 0 ? true : false)) { 
+                        const name = newCategory.name ? newCategory.name : '';
                         this.create({
-                            name: newCategory.name ? newCategory.name : '' ,
+                            category_id: this.getUUID(name),
+                            name: name,
+                            title: newCategory.title ? newCategory.title : '' ,
                             description: newCategory.description ? newCategory.description : '' ,
                             url_manual: newCategory.url_manual ? newCategory.url_manual : '' ,
                             last_update: new Date()
