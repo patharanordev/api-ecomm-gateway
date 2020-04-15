@@ -1,9 +1,10 @@
-const { Model, DataTypes } = require('sequelize');
+const { Model, DataTypes, QueryTypes } = require('sequelize');
 const uuid = require('uuid');
 
 class Payment extends Model {}
 
 Payment._sequelize = null;
+Payment._tableName = 'payment';
 
 Payment.getUUID = function(namespace) {
     // Create ID from namespace at current timestamp
@@ -30,7 +31,19 @@ Payment.initModel = function(sequelize) {
         product_id: { type: DataTypes.STRING, allowNull: false },
         price: { type: DataTypes.REAL, allowNull: false },
         qty: { type: DataTypes.INTEGER, allowNull: false }
-    }, { sequelize: this._sequelize, modelName: 'payment' });
+    }, { sequelize: this._sequelize, modelName: this._tableName });
+}
+
+Payment.modelSchema = function() {
+    return new Promise((resolve, reject) => {
+        let schema = Object.keys(this.rawAttributes);
+
+        if(schema.indexOf('createdAt')>-1) schema.splice(schema.indexOf('createdAt'), 1)
+        if(schema.indexOf('updatedAt')>-1) schema.splice(schema.indexOf('updatedAt'), 1)
+
+        try { resolve(schema); } 
+        catch(err) { reject(err); }
+    });
 }
 
 Payment.get = function(searchCondition, searchOption=null) {

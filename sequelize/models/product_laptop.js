@@ -1,8 +1,9 @@
-const { Model, DataTypes } = require('sequelize');
+const { Model, DataTypes, QueryTypes } = require('sequelize');
 
 class ProductLaptop extends Model {}
 
 ProductLaptop._sequelize = null;
+ProductLaptop._tableName = 'product_laptop';
 
 ProductLaptop.isSequelized = function() {
     return new Promise((resolve, reject) => {
@@ -25,11 +26,11 @@ ProductLaptop.initModel = function(sequelize) {
             unique: true
         },
         category_id: { type: DataTypes.STRING, allowNull: false },
-        url_image: { type: DataTypes.STRING, allowNull: false },
+        url_image: { type: DataTypes.STRING },
         brand: { type: DataTypes.STRING },
         version: { type: DataTypes.STRING },
         color: { type: DataTypes.STRING },
-        price: { type: DataTypes.REAL },
+        price: { type: DataTypes.REAL, allowNull: false },
         screen: { type: DataTypes.STRING },
         cpu: { type: DataTypes.STRING },
         processor: { type: DataTypes.STRING },
@@ -37,7 +38,19 @@ ProductLaptop.initModel = function(sequelize) {
         graphic: { type: DataTypes.STRING },
         storage: { type: DataTypes.STRING },
         storage_type: { type: DataTypes.STRING }
-    }, { sequelize: this._sequelize, modelName: 'product_laptop' });
+    }, { sequelize: this._sequelize, modelName: this._tableName });
+}
+
+ProductLaptop.modelSchema = function() {
+    return new Promise((resolve, reject) => {
+        let schema = Object.keys(this.rawAttributes);
+
+        if(schema.indexOf('createdAt')>-1) schema.splice(schema.indexOf('createdAt'), 1)
+        if(schema.indexOf('updatedAt')>-1) schema.splice(schema.indexOf('updatedAt'), 1)
+
+        try { resolve(schema); } 
+        catch(err) { reject(err); }
+    });
 }
 
 ProductLaptop.get = function(searchCondition, searchOption=null) {

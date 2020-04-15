@@ -1,9 +1,10 @@
-const { Model, DataTypes } = require('sequelize');
+const { Model, DataTypes, QueryTypes } = require('sequelize');
 const uuid = require('uuid');
 
 class User extends Model {}
 
 User._sequelize = null;
+User._tableName = 'user';
 
 User.getUUID = function(namespace) {
     // Create ID from namespace at current timestamp
@@ -33,7 +34,19 @@ User.initModel = function(sequelize) {
         username: { type: DataTypes.STRING, allowNull: false },
         email: { type: DataTypes.STRING, allowNull: false },
         last_access: { type: DataTypes.DATE, allowNull: false }
-    }, { sequelize: this._sequelize, modelName: 'user' });
+    }, { sequelize: this._sequelize, modelName: this._tableName });
+}
+
+User.modelSchema = function() {
+    return new Promise((resolve, reject) => {
+        let schema = Object.keys(this.rawAttributes);
+
+        if(schema.indexOf('createdAt')>-1) schema.splice(schema.indexOf('createdAt'), 1)
+        if(schema.indexOf('updatedAt')>-1) schema.splice(schema.indexOf('updatedAt'), 1)
+
+        try { resolve(schema); } 
+        catch(err) { reject(err); }
+    });
 }
 
 User.get = function(searchCondition, searchOption=null) {

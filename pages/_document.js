@@ -14,10 +14,10 @@ export default class eCommAdminDocument extends Document {
   render() {
     return (
       <html lang="en">
+
+        <title>eCommAdmin</title>
+
         <Head>
-
-          <title>eCommAdmin</title>
-
           {/* Step 5: Output the styles in the head  */}
           {this.props.styles}
 

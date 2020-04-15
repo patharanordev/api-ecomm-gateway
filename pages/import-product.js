@@ -3,11 +3,13 @@ import MenuComponent from '../components/menu/Menu';
 import ImageGallery from '../components/product-gallery/ImageGallery';
 import { connect } from 'react-redux';
 
-import { makeStyles } from '@material-ui/core/styles';
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import ReuseDialog from '../components/ReuseDialog';
 import Paper from '@material-ui/core/Paper';
+import Button from '@material-ui/core/Button';
 import Checkboxes from '../components/product-gallery/Checkboxes';
 import Combobox from '../components/product-gallery/Combobox';
 import Loading from '../components/Loading';
@@ -41,7 +43,7 @@ const StyleAttrList = styled(AttrList)`
   overflow-y: auto;
 `;
 
-class ProductGallery extends React.Component {
+class ImportProduct extends React.Component {
   static async getInitialProps({ store, isServer, pathname, query:{ user } }) {
     if(user) {
       console.log('ProductGallery got response : ', user)
@@ -60,6 +62,8 @@ class ProductGallery extends React.Component {
       categories: [],
       products: [],
       attrList: [],
+      saved_data: [],
+      prepared_data: [],
 
       selectedCategory: null,
       selectedProduct: null,
@@ -152,22 +156,38 @@ class ProductGallery extends React.Component {
       });
   }
 
-  updateProductByModel(categoryName, model, updateObj, callback) {
-    const url = `/api/v1/product_${categoryName}`;
-    const data = {
-      "method":"update",
-      "update": {
-        "condition": { "model": model },
-        "data": updateObj
-      }
-    };
-    rFul.post(url, data, (err, data) => {
-      if(typeof callback === 'function') {
-        let isSuccess = (data && Array.isArray(data) && data.length>0);
-        let reason = (isSuccess && data[0]>0) ? `Updated ${data[0]} row(s)` : 'Not row updated'
-        callback(err, reason);
-      }
-    });
+  addProductByModel(product, dataArr, callback) {
+    if(dataArr && Array.isArray(dataArr)) {
+      const url = `/api/v1/product_${product && product.name ? product.name : ''}`;
+      const data = { "method":"create", "data": { "items": dataArr } };
+      rFul.post(url, data, (err, data) => {
+        if(!err) {
+          this.setState({ saved_data:data }, () => {
+            if(typeof callback === 'function') { callback() }
+          })
+        }
+      });
+    } else {
+      console.log('Wrong data format, it should be array of object')
+    }
+  }
+
+  getSchema(product, callback) {
+    if(product) {
+      const url = `/api/v1/product_${product.name ? product.name : ''}`;
+      const data = { "method":"schema" };
+      rFul.post(url, data, (err, data) => {
+        if(!err) {
+          if(data && Array.isArray(data)) {
+            let o = {}
+            data.map((v,i) => o[v]='')
+            this.setState({ selectedProduct:o }, () => {
+              if(typeof callback === 'function') { callback() }
+            })
+          }
+        }
+      });
+    }
   }
 
   getProductByName(name, callback) {
@@ -194,22 +214,27 @@ class ProductGallery extends React.Component {
     });
   }
 
-  fetchProduct(productName){
-    this.setState({ isWaiting:true, selectedCategory:productName }, () => {
-      this.getProductByName(productName, () => {
-        this.setState({ attrList:this.getAttributes() })
-        this.setState({ filter:this.state.products }, () => {
-          this.setState({ isWaiting:false })
+  fetchProduct(product){
+    this.setState({ isWaiting:true, selectedCategory:product }, () => {
+      if(product && product.name) {
+        this.getProductByName(product.name, () => {
+          this.setState({ attrList:this.getAttributes() })
+          this.setState({ filter:this.state.products }, () => {
+            this.setState({ isWaiting:false })
+          })
         })
-      })
+      } else {
+        console.log('Unknown product name.')
+      }
     })
   }
 
   componentDidMount() {
     this.getCategoryList(() => {
       if(this.state.categories && Array.isArray(this.state.categories) && this.state.categories.length > 0) {
-        console.log('initial category : ', this.state.categories[1].name)
-        this.fetchProduct(this.state.categories[1].name)
+        console.log('initial category : ', this.state.categories[0].name)
+        // this.fetchProduct(this.state.categories[0])
+        this.setState({ isWaiting:false })
       }
     })
   }
@@ -218,11 +243,11 @@ class ProductGallery extends React.Component {
     let { 
       currentUser,
       categories, attrList, filter, isWaiting, checkFilter,
-      selectedProduct, selectedCategory 
+      selectedProduct, selectedCategory, prepared_data
     } = this.state;
 
     return (
-      <MenuComponent currentUser={currentUser} title='Product Gallery'>
+      <MenuComponent currentUser={currentUser} title='Import Product'>
       {
         !isWaiting
 
@@ -235,68 +260,89 @@ class ProductGallery extends React.Component {
                   <strong>Categories</strong>
                 </Typography>
                 <br/>
-                <Combobox itemList={categories ? categories : []} onChange={(selected) => {
-                  console.log('Selected item in combobox :', selected);
-                  // Default value is getCategory()[0]
-                  if(selected && selected.name){
-                    this.fetchProduct(selected.name)
+                <Combobox 
+                  selectedItem={selectedCategory}
+                  itemList={categories ? categories : []} 
+                  onChange={(selected) => {
+                    console.log('Selected item in combobox :', selected);
+                    // Default value is getCategory()[0]
+                    this.setState({ selectedCategory:selected })
                   }
-                }}/>
+                }/>
               </Grid>
   
-              <Grid item xs={12} md={4}>
-                <StylePaper>
-                  <Typography variant="body1">
-                    <strong>Simple Filter by attribute</strong>
-                    <br/>
-                    <small>Using <strong>'OR'</strong> condition to filter it.</small>
-                  </Typography>
-                  <br />
-                  <StyleAttrList>
-                  {
-                    attrList
-                    ? 
-                      Object.keys(attrList).map((attrName, attrObjIndex) => {
-                        console.log(attrName);
-                        return (
-                          <Checkboxes 
-                            key={`checkbox-idx-${attrObjIndex}`}
-                            title={attrName.toUpperCase()} attrs={attrList[attrName]} onSelect={(k,v) => {
-                              let selectedAttr = this.state.selectedAttr;
-                              if(v) {
-                                if(!selectedAttr.hasOwnProperty(attrName)) {
-                                  selectedAttr[attrName] = [];
-                                }
-                                selectedAttr[attrName].push(k);
-                              } else {
-                                if(selectedAttr.hasOwnProperty(attrName)) {
-                                  let tmpIdx = selectedAttr[attrName].indexOf(k);
-                                  if(tmpIdx>-1) selectedAttr[attrName].splice(tmpIdx, 1)
-                                }
-                              }
-                              this.setState({ selectedAttr:selectedAttr })
-                              this.handlerFilterByType(selectedAttr);
-                            }}/>
-                        )
-                      })
-  
-                    : null
-                  }
-                  </StyleAttrList>
-                </StylePaper>
+              <Grid item xs={12} align={'right'}>
+                <Button disabled>Add Category</Button>
+                <Button variant="contained" color="primary" onClick={() => {
+                  this.getSchema(selectedCategory, () => {
+                    this.setState({ isOpenDialog:true })
+                  })
+                }}>
+                  Add Product
+                </Button>
+                <br/>
+                <p style={{ color:'red' }}><small>* Add category doesn't support in this version.</small></p>
               </Grid>
   
-              <Grid item xs={12} md={8}>
-                <ImageGallery 
-                  filter={filter}
-                  checkFilter={checkFilter}
-                  handleDialog={(tile)=>{
-                    this.setState({ selectedProduct:tile }, () => {
-                      this.handleDialog()
-                    });
-                  }}/>
+              <Grid item xs={12}>
+                <Grid container spacing={1}>
+                {
+                  prepared_data
+                  ?
+                    prepared_data.map((v,i) => {
+                      return (
+                        <Grid item xs={12} key={`prepare-grid-item-${i}`}>
+                          <StylePaper key={`prepare-item-${i}`}>
+                            <Grid container spacing={1}>
+
+                              <Grid item xs={10}>
+                                <Grid item xs={12}>
+                                  <Typography variant='caption'><strong>model</strong></Typography>
+                                  <Typography variant='h5'>
+                                    { v.model ? v.model : null }
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                  <Typography variant='caption'><strong>price</strong></Typography>
+                                  <Typography variant='body1'>{ v.price ? v.price : 0 }</Typography>
+                                </Grid>
+                              </Grid>
+
+                              <Grid item xs={2} style={{
+                                alignSelf: 'center',
+                                textAlign: '-webkit-center'
+                              }}>
+                                <IconButton aria-label="delete" onClick={() => {
+                                  prepared_data.splice(i, 1)
+                                  this.setState({ prepared_data:prepared_data });
+                                }}>
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Grid>
+
+                            </Grid>
+                          </StylePaper>
+                        </Grid>
+                      )
+                    })
+                  
+                  : null
+                }
+                </Grid>
               </Grid>
-  
+
+              <Grid item xs={12} align={'right'}>
+                <Button variant="contained" color="primary" onClick={() => {
+                  this.setState({ isWaiting:true }, () => {
+                    this.addProductByModel(selectedCategory, prepared_data, () => {
+                      this.setState({ isWaiting:false })
+                    })
+                  })
+                }}>
+                  Save
+                </Button>
+              </Grid>
+
             </Grid>
   
             <ReuseDialog 
@@ -306,24 +352,19 @@ class ProductGallery extends React.Component {
               onClose={(isOpen) => { this.setState({ isOpenDialog:isOpen }) }}
               onOK={(data) => {
                 console.log('On dialog save : ', data);
-  
-                // Normalize data
-                this.updateProductByModel(selectedCategory, data.model, data.data, () => {
-                  this.setState({ isOpenDialog:false }, () => {
-                    this.fetchProduct(selectedCategory)
-                  })
-                })
+
+                let prepData = prepared_data;
+                prepData.push(data.data);
+                this.setState({ prepared_data:prepData });
+                this.setState({ isOpenDialog:false });
               }}
               optimize={(data) => {
                 // Cleansing data
-                let model = null;
                 if(data) {
-                  model = data.model ? data.model : null;
-                  delete data['model'];
                   delete data['createdAt'];
                   delete data['updatedAt'];
                 }
-                return { model:model, data:data }
+                return { data }
               }}
             />
           
@@ -338,4 +379,4 @@ class ProductGallery extends React.Component {
   }
 }
 
-export default connect(state => state)(ProductGallery);
+export default connect(state => state)(ImportProduct);

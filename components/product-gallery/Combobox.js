@@ -7,7 +7,6 @@ import TextField from '@material-ui/core/TextField';
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    width: 500,
     '& > * + *': {
       marginTop: theme.spacing(2),
     },
@@ -17,6 +16,9 @@ const useStyles = makeStyles((theme) => ({
 export default function Combobox(props) {
   const classes = useStyles();
   const itemList = props.itemList ? props.itemList : [];
+
+  const [selectedItem, setSelectedItem] = React.useState(props.selectedItem ? props.selectedItem : { title:''})
+
 
   console.log('Combobox itemList : ', itemList)
 
@@ -28,8 +30,10 @@ export default function Combobox(props) {
         options={itemList}
         getOptionLabel={(option) => option && option.title ? option.title : ''}
         renderInput={(params) => <TextField {...params} label="Category" variant="outlined" placeholder="product type" />}
+        value={selectedItem}
         onChange={(event, value, reason) => { 
           console.log('On select combobox:', value);
+          setSelectedItem(value)
           if(typeof props.onChange==='function') props.onChange(value);
         }}
       />
