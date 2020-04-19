@@ -16,12 +16,12 @@ export const mainMenuList = [{
   link: '/dashboard'
 }, {
   icon: <DashboardIcon />,
-  label: 'Product Gallery',
-  link: '/product-gallery'
+  label: 'Gallery',
+  link: '/gallery'
 }, {
   icon: <ShoppingCartIcon />,
-  label: 'Orders',
-  link: '/'
+  label: 'Import',
+  link: '/import-product'
 }, {
   icon: <PeopleIcon />,
   label: 'Customers',

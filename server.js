@@ -49,6 +49,11 @@ const app = next({ dev });
 //     console.log('in handler - user:', req.user)
 //     app.render(req, res, route.page, { user:req.user?req.user:null })
 // });
+const appRenderWithAuthHandler = (req, res) => {
+    console.log('in get - user:', req.user);
+    console.log('in get - base url :', req.path);
+    return app.render(req, res, req.path, { user:req.user })
+}
 
 const clientRouteHandler = clientRoutes.getRequestHandler(app);
 const responseHandler = (promise, endpoint, res) => {
@@ -106,6 +111,7 @@ app.prepare()
                     case 'delete': responseHandler(theModel.delete(req.body.id), `/api/v1/${req.params.name}`, res); break;
                     case 'drop': responseHandler(theModel.dropTable(), `/api/v1/${req.params.name}`, res); break;
                     case 'update': responseHandler(theModel.set(req.body.update), `/api/v1/${req.params.name}`, res); break;
+                    case 'schema': responseHandler(theModel.modelSchema(), `/api/v1/${req.params.name}`, res); break;
                     case 'access': {
                         if(req.params.name) {
                             responseHandler(theModel.setLastAccess(req.body.id), `/api/v1/${req.params.name}`, res); 
@@ -161,12 +167,8 @@ app.prepare()
         
         return app.render(req, res, '/dashboard', { user:req.user })
     })
-    server.get('/product-gallery', cslg.ensureLoggedIn('/login/google'), (req, res) => {
-        console.log('in get - user:', req.user);
-        // return clientRouteHandler(req, res);
-        
-        return app.render(req, res, '/product-gallery', { user:req.user })
-    })
+    server.get('/gallery', cslg.ensureLoggedIn('/login/google'), appRenderWithAuthHandler)
+    server.get('/import-product', cslg.ensureLoggedIn('/login/google'), appRenderWithAuthHandler)
 
     // Allow server using routes handler from 'nextjs' app (client)
     server.use(clientRouteHandler);

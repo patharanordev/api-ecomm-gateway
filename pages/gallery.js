@@ -3,7 +3,6 @@ import MenuComponent from '../components/menu/Menu';
 import ImageGallery from '../components/product-gallery/ImageGallery';
 import { connect } from 'react-redux';
 
-import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import ReuseDialog from '../components/ReuseDialog';
@@ -41,7 +40,7 @@ const StyleAttrList = styled(AttrList)`
   overflow-y: auto;
 `;
 
-class ProductGallery extends React.Component {
+class Gallery extends React.Component {
   static async getInitialProps({ store, isServer, pathname, query:{ user } }) {
     if(user) {
       console.log('ProductGallery got response : ', user)
@@ -152,8 +151,8 @@ class ProductGallery extends React.Component {
       });
   }
 
-  updateProductByModel(categoryName, model, updateObj, callback) {
-    const url = `/api/v1/product_${categoryName}`;
+  updateProductByModel(product, model, updateObj, callback) {
+    const url = `/api/v1/product_${product && product.name ? product.name : ''}`;
     const data = {
       "method":"update",
       "update": {
@@ -194,22 +193,26 @@ class ProductGallery extends React.Component {
     });
   }
 
-  fetchProduct(productName){
-    this.setState({ isWaiting:true, selectedCategory:productName }, () => {
-      this.getProductByName(productName, () => {
-        this.setState({ attrList:this.getAttributes() })
-        this.setState({ filter:this.state.products }, () => {
-          this.setState({ isWaiting:false })
+  fetchProduct(product){
+    this.setState({ isWaiting:true, selectedCategory:product }, () => {
+      if(product && product.name) {
+        this.getProductByName(product.name, () => {
+          this.setState({ attrList:this.getAttributes() })
+          this.setState({ filter:this.state.products }, () => {
+            this.setState({ isWaiting:false })
+          })
         })
-      })
+      } else {
+        console.log('Unknown product name.')
+      }
     })
   }
 
   componentDidMount() {
     this.getCategoryList(() => {
       if(this.state.categories && Array.isArray(this.state.categories) && this.state.categories.length > 0) {
-        console.log('initial category : ', this.state.categories[1].name)
-        this.fetchProduct(this.state.categories[1].name)
+        console.log('initial category : ', this.state.categories[0].name)
+        this.fetchProduct(this.state.categories[0])
       }
     })
   }
@@ -222,7 +225,7 @@ class ProductGallery extends React.Component {
     } = this.state;
 
     return (
-      <MenuComponent currentUser={currentUser} title='Product Gallery'>
+      <MenuComponent currentUser={currentUser} title='Gallery'>
       {
         !isWaiting
 
@@ -235,68 +238,79 @@ class ProductGallery extends React.Component {
                   <strong>Categories</strong>
                 </Typography>
                 <br/>
-                <Combobox itemList={categories ? categories : []} onChange={(selected) => {
-                  console.log('Selected item in combobox :', selected);
-                  // Default value is getCategory()[0]
-                  if(selected && selected.name){
-                    this.fetchProduct(selected.name)
+                <Combobox 
+                  selectedItem={selectedCategory}
+                  itemList={categories ? categories : []} 
+                  onChange={(selected) => {
+                    console.log('Selected item in combobox :', selected);
+                    // Default value is getCategory()[0]
+                    if(selected){
+                      this.fetchProduct(selected)
+                    }
                   }
-                }}/>
+                }/>
               </Grid>
-  
-              <Grid item xs={12} md={4}>
-                <StylePaper>
-                  <Typography variant="body1">
-                    <strong>Simple Filter by attribute</strong>
-                    <br/>
-                    <small>Using <strong>'OR'</strong> condition to filter it.</small>
-                  </Typography>
-                  <br />
-                  <StyleAttrList>
-                  {
-                    attrList
-                    ? 
-                      Object.keys(attrList).map((attrName, attrObjIndex) => {
-                        console.log(attrName);
-                        return (
-                          <Checkboxes 
-                            key={`checkbox-idx-${attrObjIndex}`}
-                            title={attrName.toUpperCase()} attrs={attrList[attrName]} onSelect={(k,v) => {
-                              let selectedAttr = this.state.selectedAttr;
-                              if(v) {
-                                if(!selectedAttr.hasOwnProperty(attrName)) {
-                                  selectedAttr[attrName] = [];
-                                }
-                                selectedAttr[attrName].push(k);
-                              } else {
-                                if(selectedAttr.hasOwnProperty(attrName)) {
-                                  let tmpIdx = selectedAttr[attrName].indexOf(k);
-                                  if(tmpIdx>-1) selectedAttr[attrName].splice(tmpIdx, 1)
-                                }
-                              }
-                              this.setState({ selectedAttr:selectedAttr })
-                              this.handlerFilterByType(selectedAttr);
-                            }}/>
-                        )
-                      })
-  
-                    : null
-                  }
-                  </StyleAttrList>
-                </StylePaper>
-              </Grid>
-  
-              <Grid item xs={12} md={8}>
-                <ImageGallery 
-                  filter={filter}
-                  checkFilter={checkFilter}
-                  handleDialog={(tile)=>{
-                    this.setState({ selectedProduct:tile }, () => {
-                      this.handleDialog()
-                    });
-                  }}/>
-              </Grid>
-  
+    
+              {
+                filter && filter.length > 0
+                ?
+                  <>
+                    <Grid item xs={12} md={4}>
+                      <StylePaper>
+                        <Typography variant="body1">
+                          <strong>Simple Filter by attribute</strong>
+                          <br/>
+                          <small>Using <strong>'OR'</strong> condition to filter it.</small>
+                        </Typography>
+                        <br />
+                        <StyleAttrList>
+                        {
+                          attrList
+                          ? 
+                            Object.keys(attrList).map((attrName, attrObjIndex) => {
+                              console.log(attrName);
+                              return (
+                                <Checkboxes 
+                                  key={`checkbox-idx-${attrObjIndex}`}
+                                  title={attrName.toUpperCase()} attrs={attrList[attrName]} onSelect={(k,v) => {
+                                    let selectedAttr = this.state.selectedAttr;
+                                    if(v) {
+                                      if(!selectedAttr.hasOwnProperty(attrName)) {
+                                        selectedAttr[attrName] = [];
+                                      }
+                                      selectedAttr[attrName].push(k);
+                                    } else {
+                                      if(selectedAttr.hasOwnProperty(attrName)) {
+                                        let tmpIdx = selectedAttr[attrName].indexOf(k);
+                                        if(tmpIdx>-1) selectedAttr[attrName].splice(tmpIdx, 1)
+                                      }
+                                    }
+                                    this.setState({ selectedAttr:selectedAttr })
+                                    this.handlerFilterByType(selectedAttr);
+                                  }}/>
+                              )
+                            })
+        
+                          : null
+                        }
+                        </StyleAttrList>
+                      </StylePaper>
+                    </Grid>
+        
+                    <Grid item xs={12} md={8}>
+                      <ImageGallery 
+                        filter={filter}
+                        checkFilter={checkFilter}
+                        handleDialog={(tile)=>{
+                          this.setState({ selectedProduct:tile }, () => {
+                            this.handleDialog()
+                          });
+                        }}/>
+                    </Grid>
+                  </>
+                :
+                  null
+              }
             </Grid>
   
             <ReuseDialog 
@@ -338,4 +352,4 @@ class ProductGallery extends React.Component {
   }
 }
 
-export default connect(state => state)(ProductGallery);
+export default connect(state => state)(Gallery);

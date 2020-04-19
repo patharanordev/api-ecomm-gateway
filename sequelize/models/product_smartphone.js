@@ -1,8 +1,9 @@
-const { Model, DataTypes } = require('sequelize');
+const { Model, DataTypes, QueryTypes } = require('sequelize');
 
 class ProductSmartphone extends Model {}
 
 ProductSmartphone._sequelize = null;
+ProductSmartphone._tableName = 'product_smartphone';
 
 ProductSmartphone.isSequelized = function() {
     return new Promise((resolve, reject) => {
@@ -18,7 +19,7 @@ ProductSmartphone.isSequelized = function() {
 ProductSmartphone.initModel = function(sequelize) {
     this._sequelize = sequelize;
     this.init({
-        model: {
+        'model': {
             type: DataTypes.STRING,
             allowNull: false,
             primaryKey: true,
@@ -30,7 +31,19 @@ ProductSmartphone.initModel = function(sequelize) {
         version: { type: DataTypes.STRING },
         color: { type: DataTypes.STRING },
         price: { type: DataTypes.REAL }
-    }, { sequelize: this._sequelize, modelName: 'product_smartphone' });
+    }, { sequelize: this._sequelize, modelName: this._tableName });
+}
+
+ProductSmartphone.modelSchema = function() {
+    return new Promise((resolve, reject) => {
+        let schema = Object.keys(this.rawAttributes);
+
+        if(schema.indexOf('createdAt')>-1) schema.splice(schema.indexOf('createdAt'), 1)
+        if(schema.indexOf('updatedAt')>-1) schema.splice(schema.indexOf('updatedAt'), 1)
+
+        try { resolve(schema); } 
+        catch(err) { reject(err); }
+    });
 }
 
 ProductSmartphone.get = function(searchCondition, searchOption=null) {
@@ -70,28 +83,43 @@ ProductSmartphone.set = function(updateObj) {
 
 ProductSmartphone.add = function(newProduct) {
 
+    console.log(JSON.stringify(newProduct))
+
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
             if(newProduct && newProduct.items) {
 
-                const items = Array.isArray(newProduct.items) ? newProduct.items : [];
-                let bulkItems = [];
-                
-                items.map((o,i) => {
-                    bulkItems.push({
-                        model: o.model ? o.model : '',
-                        category_id: o.category_id ? o.category_id : '',
-                        url_image: o.url_image ? o.url_image : '',
-                        brand: o.brand ? o.brand : '',
-                        version: o.version ? o.version : '',
-                        color: o.color ? o.color : '',
-                        price: o.price ? o.price : ''
-                    })
-                });
+                try {
 
-                this.bulkCreate(bulkItems, { returning: ['model'], ignoreDuplicates:true })
-                .then((r) => resolve(r))
-                .catch((err) => reject(err));
+                    const items = Array.isArray(newProduct.items) ? newProduct.items : [];
+                    let bulkItems = [];
+
+                    items.map((o,i) => {
+
+                        let price = 0;
+        
+                        try { price = o.price ? parseFloat(o.price) : 0 } 
+                        catch(err) { price = -1; }
+                        
+                        bulkItems.push({
+                            'model': o.model ? o.model : '',
+                            category_id: o.category_id ? o.category_id : '',
+                            url_image: o.url_image ? o.url_image : '',
+                            brand: o.brand ? o.brand : '',
+                            version: o.version ? o.version : '',
+                            color: o.color ? o.color : '',
+                            price: price
+                        })
+                    });
+
+                    this.bulkCreate(bulkItems, { returning: ['model'], ignoreDuplicates:true })
+                    .then((r) => resolve(r))
+                    .catch((err) => reject(err));
+
+                } catch(err) {
+                    console.log(err)
+                    reject(err)
+                }
                 
             } else { reject('Unknown product info object pattern.') }
         }).catch((err) => reject(err));

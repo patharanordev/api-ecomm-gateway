@@ -1,9 +1,10 @@
-const { Model, DataTypes } = require('sequelize');
+const { Model, DataTypes, QueryTypes } = require('sequelize');
 const uuid = require('uuid');
 
 class ProductCategories extends Model {}
 
 ProductCategories._sequelize = null;
+ProductCategories._tableName = 'product_categories';
 
 ProductCategories.getUUID = function(namespace) {
     // Create ID from namespace at current timestamp
@@ -35,7 +36,19 @@ ProductCategories.initModel = function(sequelize) {
         description: { type: DataTypes.STRING, allowNull: false },
         url_manual: { type: DataTypes.STRING, allowNull: false },
         last_update: { type: DataTypes.DATE, allowNull: false }
-    }, { sequelize: this._sequelize, modelName: 'product_categories' });
+    }, { sequelize: this._sequelize, modelName: this._tableName });
+}
+
+ProductCategories.modelSchema = function() {
+    return new Promise((resolve, reject) => {
+        let schema = Object.keys(this.rawAttributes);
+
+        if(schema.indexOf('createdAt')>-1) schema.splice(schema.indexOf('createdAt'), 1)
+        if(schema.indexOf('updatedAt')>-1) schema.splice(schema.indexOf('updatedAt'), 1)
+
+        try { resolve(schema); } 
+        catch(err) { reject(err); }
+    });
 }
 
 ProductCategories.get = function(searchCondition, searchOption=null) {
