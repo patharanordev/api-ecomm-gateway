@@ -11,11 +11,6 @@ ProductCategories.getUUID = function(namespace) {
     return uuid.v5(namespace, uuid.v1());
 }
 
-ProductCategories.getUUID = function(namespace) {
-    // Create ID from namespace at current timestamp
-    return uuid.v5(namespace, uuid.v1());
-}
-
 ProductCategories.isSequelized = function() {
     return new Promise((resolve, reject) => {
         try {

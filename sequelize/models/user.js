@@ -11,11 +11,6 @@ User.getUUID = function(namespace) {
     return uuid.v5(namespace, uuid.v1());
 }
 
-User.getUUID = function(namespace) {
-    // Create ID from namespace at current timestamp
-    return uuid.v5(namespace, uuid.v1());
-}
-
 User.isSequelized = function() {
     return new Promise((resolve, reject) => {
         try {
