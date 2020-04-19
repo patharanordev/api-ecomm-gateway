@@ -1,10 +1,15 @@
-const { Model, DataTypes, QueryTypes } = require('sequelize');
+const { Model, DataTypes } = require('sequelize');
 const uuid = require('uuid');
 
 class Payment extends Model {}
 
 Payment._sequelize = null;
 Payment._tableName = 'payment';
+
+Payment.getUUID = function(namespace) {
+    // Create ID from namespace at current timestamp
+    return uuid.v5(namespace, uuid.v1());
+}
 
 Payment.getUUID = function(namespace) {
     // Create ID from namespace at current timestamp

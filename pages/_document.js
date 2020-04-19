@@ -21,6 +21,11 @@ export default class eCommAdminDocument extends Document {
           {/* Step 5: Output the styles in the head  */}
           {this.props.styles}
 
+          <title>eCommAdmin</title>
+
+          {/* Step 5: Output the styles in the head  */}
+          {this.props.styles}
+
           { /* Facebook Analytic */ }
           <script dangerouslySetInnerHTML={{__html: `
             window.fbAsyncInit = function() {
