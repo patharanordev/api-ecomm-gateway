@@ -68,6 +68,7 @@ class ImportProduct extends React.Component {
   dispatch(action, callback) {
     if(has(action, 'type') && has(action, 'payload')) {
       this.props.dispatch({ type:action.type, payload:action.payload })
+      // .then(() => console.log('Dispatch with action : ', action))
       if(typeof callback === 'function') callback();
     } else {
       if(typeof callback === 'function') callback('Unknown the action!');
@@ -137,14 +138,14 @@ class ImportProduct extends React.Component {
   }
 
   componentDidMount() {
-    const { import_page_categories } = this.props;
-    if(!import_page_categories) {
+    if(!this.props.import_page_categories) {
       this.getCategoryList((err) => {
         if(err) {
           console.log('Load category list error : ', err);
         } else {
-          if(import_page_categories && Array.isArray(import_page_categories) && import_page_categories.length > 0) {
-            console.log('initial category : ', import_page_categories[0].name)
+          const c = this.props.import_page_categories;
+          if(c && Array.isArray(c) && c.length > 0) {
+            console.log('initial category : ', c[0].name)
             this.setState({ isWaiting:false })
           }
         }
