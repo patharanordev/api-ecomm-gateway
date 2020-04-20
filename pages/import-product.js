@@ -45,30 +45,19 @@ class ImportProduct extends React.Component {
     super(props)
 
     this.state = {
-      currentUser: props.currentUser,
+      currentUser: props.UserReducer && props.UserReducer.currentUser
+      ? props.UserReducer.currentUser
+      : {},
+
       isOpenDialog: false,
       selectedProduct: null,
       isWaiting: true
     }
   }
 
-  handleStoreStateChange(stateName) {
-    const previous = this.state[stateName]
-    const current = this.selectStoreState(stateName)
-
-    if(previous !== current) {
-      console.log(`State of "${stateName}" changed from `, previous, ' to ', current)
-    }
-  }
-
-  selectStoreState(stateName) {
-    return stateName ? this.props.store.getState()[stateName] : null;
-  }
-
   dispatch(action, callback) {
     if(has(action, 'type') && has(action, 'payload')) {
       this.props.dispatch({ type:action.type, payload:action.payload })
-      // .then(() => console.log('Dispatch with action : ', action))
       if(typeof callback === 'function') callback();
     } else {
       if(typeof callback === 'function') callback('Unknown the action!');
@@ -130,20 +119,17 @@ class ImportProduct extends React.Component {
     rFul.post(url, data, (err, data) => {
       if(!err) {
         this.setCategory(data, callback);
-        // this.setState({ categories:data }, () => {
-        //   if(typeof callback === 'function') { callback() }
-        // })
       }
     });
   }
 
   componentDidMount() {
-    if(!this.props.import_page_categories) {
+    if(!this.props.ImportProductReducer.import_page_categories) {
       this.getCategoryList((err) => {
         if(err) {
           console.log('Load category list error : ', err);
         } else {
-          const c = this.props.import_page_categories;
+          const c = this.props.ImportProductReducer.import_page_categories;
           if(c && Array.isArray(c) && c.length > 0) {
             console.log('initial category : ', c[0].name)
             this.setState({ isWaiting:false })
@@ -162,7 +148,7 @@ class ImportProduct extends React.Component {
 
     let {
       import_page_categories, import_page_selectedCategory
-    } = this.props
+    } = this.props.ImportProductReducer
 
     return (
       <MenuComponent currentUser={currentUser} title='Import Product'>
@@ -211,9 +197,9 @@ class ImportProduct extends React.Component {
                     </Typography>
                   </Grid>
                 {
-                  this.props.import_page_prepared_data
+                  this.props.ImportProductReducer.import_page_prepared_data
                   ?
-                    this.props.import_page_prepared_data.map((v,i) => {
+                    this.props.ImportProductReducer.import_page_prepared_data.map((v,i) => {
                       return (
                         <Grid item xs={12} key={`prepare-grid-item-${i}`}>
                           <StylePaper key={`prepare-item-${i}`}>
@@ -248,9 +234,8 @@ class ImportProduct extends React.Component {
                                 textAlign: '-webkit-center'
                               }}>
                                 <IconButton aria-label="delete" onClick={() => {
-                                  let tmp = [...this.props.import_page_prepared_data];
+                                  let tmp = [...this.props.ImportProductReducer.import_page_prepared_data];
                                   tmp.splice(i, 1)
-                                  // this.setState({ import_page_prepared_data:import_page_prepared_data });
                                   this.setPreparedData(tmp)
                                 }}>
                                   <DeleteIcon />
@@ -271,8 +256,7 @@ class ImportProduct extends React.Component {
               <Grid item xs={12} align={'right'}>
                 <Button variant="contained" color="primary" onClick={() => {
                   this.setState({ isWaiting:true }, () => {
-                    this.addProductByModel(import_page_selectedCategory, this.props.import_page_prepared_data, () => {
-                      // this.setState({ isWaiting:false, import_page_prepared_data:[] })
+                    this.addProductByModel(import_page_selectedCategory, this.props.ImportProductReducer.import_page_prepared_data, () => {
                       this.setState({ isWaiting:false })
                       this.setPreparedData([])
                     })
@@ -291,10 +275,9 @@ class ImportProduct extends React.Component {
               onClose={(isOpen) => { this.setState({ isOpenDialog:isOpen }) }}
               onOK={(data) => {
                 console.log('On dialog save : ', data);
-
-                let prepData = this.props.import_page_prepared_data ? [...this.props.import_page_prepared_data] : [];
+                
+                let prepData = this.props.ImportProductReducer.import_page_prepared_data ? [...this.props.ImportProductReducer.import_page_prepared_data] : [];
                 prepData.push(data.data);
-                // this.setState({ import_page_prepared_data:prepData });
                 this.setPreparedData(prepData)
                 this.setState({ isOpenDialog:false });
               }}

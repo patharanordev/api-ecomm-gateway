@@ -15,6 +15,8 @@ import RESTFul from '../helper/RESTFul';
 
 import styled from 'styled-components';
 
+import has from 'has';
+
 // import tileData from './tileData';
 
 const rFul = RESTFul();
@@ -53,28 +55,57 @@ class Gallery extends React.Component {
     super(props)
 
     this.state = {
-      currentUser: props.currentUser,
+      currentUser: props.UserReducer && props.UserReducer.currentUser
+      ? props.UserReducer.currentUser
+      : {},
 
       isOpenDialog: false,
-      categories: [],
-      products: [],
-      attrList: [],
 
-      selectedCategory: null,
       selectedProduct: null,
-      selectedAttr: {},
       checkFilter: true,
-      filter: [],
 
       isWaiting: true
     }
+  }
+
+  dispatch(action, callback) {
+    if(has(action, 'type') && has(action, 'payload')) {
+      this.props.dispatch({ type:action.type, payload:action.payload })
+      if(typeof callback === 'function') callback();
+    } else {
+      if(typeof callback === 'function') callback('Unknown the action!');
+    }
+  }
+
+  setCategory(data, callback) {
+    this.dispatch({ type: 'GALLERY_PAGE_CATEGORY_LIST', payload: data }, callback);
+  }
+
+  setSelectedCategory(data, callback) {
+    this.dispatch({ type: 'GALLERY_PAGE_SELECTED_CATEGORY', payload: data }, callback);
+  }
+
+  setAttributeFilter(data, callback) {
+    this.dispatch({ type: 'GALLERY_PAGE_ATTRIBUTE_FILTER', payload: data }, callback);
+  }
+
+  setAttributeList(data, callback) {
+    this.dispatch({ type: 'GALLERY_PAGE_ATTRIBUTE_LIST', payload: data }, callback);
+  }
+
+  setProducts(data, callback) {
+    this.dispatch({ type: 'GALLERY_PAGE_PRODUCTS', payload: data }, callback);
+  }
+
+  setSelectedAttribute(data, callback) {
+    this.dispatch({ type: 'GALLERY_PAGE_SELECTED_ATTRIBUTE', payload: data }, callback);
   }
 
   handlerFilterByType(attrs) {
     console.log('attrs : ', attrs);
     this.setState({ checkFilter:false }, () => {
       setTimeout(() => {
-        this.setState({ filter:this.filterByAttr(attrs) }, () => {
+        this.setAttributeFilter(this.filterByAttr(attrs), () => {
           this.setState({ checkFilter:true })
         });
       }, 300);
@@ -94,10 +125,13 @@ class Gallery extends React.Component {
       // }
     };
 
-    if(this.state.products && this.state.products.length>0) {
-      let attrNames = Object.keys(this.state.products[0]);
+    let p = this.props.GalleryReducer.gallery_page_products;
+    p = p ? p : [];
 
-      this.state.products.map((o,i) => {
+    if(p && p.length>0) {
+      let attrNames = Object.keys(p[0]);
+
+      p.map((o,i) => {
         attrNames.map((attrName, attrNameIndex) => {
           try {
             if(!attrList.hasOwnProperty(attrName)) {
@@ -127,14 +161,17 @@ class Gallery extends React.Component {
       attrs[attrName].length>0 ? countSelected++ : null;
     });
 
+    let p = this.props.GalleryReducer.gallery_page_products;
+    p = p ? p : [];
+
     return countSelected==0
     ? 
       (
         // Show all products is default if user didn't select anything
-        this.state.products
+        p
       )
     :
-      this.state.products.filter((o,i) => {
+      p.filter((o,i) => {
         let isMatched = 0;
 
         focusAttrs.map((attrName, attrNameIndex) => {
@@ -174,9 +211,7 @@ class Gallery extends React.Component {
     const data = { "method":"select", "condition": {} };
     rFul.post(url, data, (err, data) => {
       if(!err) {
-        this.setState({ products:data }, () => {
-          if(typeof callback === 'function') { callback() }
-        })
+        this.setProducts(data, callback)
       }
     });
   }
@@ -186,42 +221,56 @@ class Gallery extends React.Component {
     const data = { "method":"select", "condition": {} };
     rFul.post(url, data, (err, data) => {
       if(!err) {
-        this.setState({ categories:data }, () => {
-          if(typeof callback === 'function') { callback() }
-        })
+        this.setCategory(data, callback)
       }
     });
   }
 
   fetchProduct(product){
-    this.setState({ isWaiting:true, selectedCategory:product }, () => {
-      if(product && product.name) {
-        this.getProductByName(product.name, () => {
-          this.setState({ attrList:this.getAttributes() })
-          this.setState({ filter:this.state.products }, () => {
-            this.setState({ isWaiting:false })
+    this.setState({ isWaiting:true }, () => {
+
+      this.setSelectedCategory(product, () => {
+        if(product && product.name) {
+          this.getProductByName(product.name, () => {
+            let p = this.props.GalleryReducer.gallery_page_products;
+            p = p ? p : [];
+
+            this.setAttributeList(this.getAttributes())
+            this.setAttributeFilter(p, () => {
+              this.setState({ isWaiting:false })
+            })
           })
-        })
-      } else {
-        console.log('Unknown product name.')
-      }
+        } else {
+          console.log('Unknown product name.')
+        }
+      })
+
     })
   }
 
   componentDidMount() {
-    this.getCategoryList(() => {
-      if(this.state.categories && Array.isArray(this.state.categories) && this.state.categories.length > 0) {
-        console.log('initial category : ', this.state.categories[0].name)
-        this.fetchProduct(this.state.categories[0])
-      }
-    })
+    if(!this.props.GalleryReducer.gallery_page_categories) {
+      this.getCategoryList((err) => {
+        if(err) {
+          console.log('Load category list error : ', err);
+        } else {
+          const c = this.props.GalleryReducer.gallery_page_categories;
+          if(c && Array.isArray(c) && c.length > 0) {
+            console.log('initial category : ', c[0].name)
+            this.fetchProduct(c[0])
+          }
+        }
+      })
+    } else {
+      this.setState({ isWaiting:false })
+    }
   }
 
   render() {
     let { 
       currentUser,
-      categories, attrList, filter, isWaiting, checkFilter,
-      selectedProduct, selectedCategory 
+      isWaiting, checkFilter,
+      selectedProduct 
     } = this.state;
 
     return (
@@ -239,8 +288,16 @@ class Gallery extends React.Component {
                 </Typography>
                 <br/>
                 <Combobox 
-                  selectedItem={selectedCategory}
-                  itemList={categories ? categories : []} 
+                  selectedItem={
+                    this.props.GalleryReducer.gallery_page_selectedCategory 
+                    ? this.props.GalleryReducer.gallery_page_selectedCategory 
+                    : []
+                  }
+                  itemList={
+                    this.props.GalleryReducer.gallery_page_categories 
+                    ? this.props.GalleryReducer.gallery_page_categories 
+                    : []
+                  } 
                   onChange={(selected) => {
                     console.log('Selected item in combobox :', selected);
                     // Default value is getCategory()[0]
@@ -252,7 +309,7 @@ class Gallery extends React.Component {
               </Grid>
     
               {
-                filter && filter.length > 0
+                this.props.GalleryReducer.gallery_page_filter && this.props.GalleryReducer.gallery_page_filter.length > 0
                 ?
                   <>
                     <Grid item xs={12} md={4}>
@@ -265,27 +322,50 @@ class Gallery extends React.Component {
                         <br />
                         <StyleAttrList>
                         {
-                          attrList
+                          this.props.GalleryReducer.gallery_page_attrList
                           ? 
-                            Object.keys(attrList).map((attrName, attrObjIndex) => {
+                            Object.keys(this.props.GalleryReducer.gallery_page_attrList).map((attrName, attrObjIndex) => {
                               console.log(attrName);
                               return (
                                 <Checkboxes 
                                   key={`checkbox-idx-${attrObjIndex}`}
-                                  title={attrName.toUpperCase()} attrs={attrList[attrName]} onSelect={(k,v) => {
-                                    let selectedAttr = this.state.selectedAttr;
+                                  title={attrName.toUpperCase()} 
+                                  attrs={this.props.GalleryReducer.gallery_page_attrList[attrName]} 
+                                  onSelect={(k,v) => {
+                                    let attrList = this.props.GalleryReducer.gallery_page_attrList;
+                                    let selectedAttr = this.props.GalleryReducer.gallery_page_selectedAttr;
+                                    selectedAttr = selectedAttr ? selectedAttr : {};
+
                                     if(v) {
+
                                       if(!selectedAttr.hasOwnProperty(attrName)) {
                                         selectedAttr[attrName] = [];
                                       }
-                                      selectedAttr[attrName].push(k);
+
+                                      const specificIndex = selectedAttr[attrName].indexOf(k);
+                                      if(specificIndex<0) {
+                                        attrList[attrName][k] = true;
+                                        selectedAttr[attrName].push(k);
+                                        this.setAttributeList(attrList);
+                                      } else {
+                                        attrList[attrName][k] = false;
+                                        selectedAttr[attrName].splice(specificIndex, 1);
+                                        this.setAttributeList(attrList);
+                                      }
+
                                     } else {
+
                                       if(selectedAttr.hasOwnProperty(attrName)) {
                                         let tmpIdx = selectedAttr[attrName].indexOf(k);
-                                        if(tmpIdx>-1) selectedAttr[attrName].splice(tmpIdx, 1)
+                                        if(tmpIdx>-1) {
+                                          attrList[attrName][k] = false;
+                                          selectedAttr[attrName].splice(tmpIdx, 1);
+                                          this.setAttributeList(attrList);
+                                        }
                                       }
+
                                     }
-                                    this.setState({ selectedAttr:selectedAttr })
+                                    this.setSelectedAttribute(selectedAttr)
                                     this.handlerFilterByType(selectedAttr);
                                   }}/>
                               )
@@ -299,7 +379,7 @@ class Gallery extends React.Component {
         
                     <Grid item xs={12} md={8}>
                       <ImageGallery 
-                        filter={filter}
+                        filter={this.props.GalleryReducer.gallery_page_filter ? this.props.GalleryReducer.gallery_page_filter : []}
                         checkFilter={checkFilter}
                         handleDialog={(tile)=>{
                           this.setState({ selectedProduct:tile }, () => {
@@ -322,9 +402,9 @@ class Gallery extends React.Component {
                 console.log('On dialog save : ', data);
   
                 // Normalize data
-                this.updateProductByModel(selectedCategory, data.model, data.data, () => {
+                this.updateProductByModel(this.props.GalleryReducer.gallery_page_selectedCategory, data.model, data.data, () => {
                   this.setState({ isOpenDialog:false }, () => {
-                    this.fetchProduct(selectedCategory)
+                    this.fetchProduct(this.props.GalleryReducer.gallery_page_selectedCategory)
                   })
                 })
               }}

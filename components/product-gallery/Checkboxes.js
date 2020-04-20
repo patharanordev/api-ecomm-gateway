@@ -7,6 +7,8 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import Checkbox from '@material-ui/core/Checkbox';
 
+import has from 'has';
+
 const useStyles = makeStyles((theme) => ({
     root: {
         display: 'flex',
@@ -46,7 +48,7 @@ export default function Checkboxes(props) {
                             return (
                                 <FormControlLabel
                                     key={`${props.title ? props.title : ''}-idx-${i}`}
-                                    control={<Checkbox checked={gilad} onChange={handleChange} name={o} />}
+                                    control={<Checkbox checked={has(state, o) ? state[o] : false} onChange={handleChange} name={o} />}
                                     label={o}
                                 />
                             )
