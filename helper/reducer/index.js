@@ -1,15 +1,15 @@
 import { combineReducers } from 'redux'
 
-import OtherReducer from './others';
-import UserReducer from './user';
-import GalleryReducer from './gallery';
-import ImportProductReducer from './import-product';
+import others from './others';
+import user from './user';
+import gallery from './gallery';
+import product from './product';
  
 const RootReducer = combineReducers({
-    OtherReducer,
-    UserReducer,
-    GalleryReducer,
-    ImportProductReducer
+    others,
+    user,
+    gallery,
+    product
 })
 
 

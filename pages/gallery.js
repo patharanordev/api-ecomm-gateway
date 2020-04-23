@@ -8,8 +8,8 @@ import Typography from '@material-ui/core/Typography';
 import ReuseDialog from '../components/ReuseDialog';
 import Paper from '@material-ui/core/Paper';
 import Checkboxes from '../components/product-gallery/Checkboxes';
-import Combobox from '../components/product-gallery/Combobox';
 import Loading from '../components/Loading';
+import CategorySelector from '../components/CategorySelector';
 
 import RESTFul from '../helper/RESTFul';
 
@@ -47,7 +47,6 @@ class Gallery extends React.Component {
     if(user) {
       console.log('ProductGallery got response : ', user)
       store.dispatch({ type:'CURRENT_USER', payload:user });
-      // return { currentUser:user }
     }
   }
 
@@ -55,11 +54,17 @@ class Gallery extends React.Component {
     super(props)
 
     this.state = {
-      currentUser: props.UserReducer && props.UserReducer.currentUser
-      ? props.UserReducer.currentUser
+      currentUser: props.user && props.user.currentUser
+      ? props.user.currentUser
       : {},
 
+      alertMsg: '',
+      deleteItemId: null,
+      onDialogPressOK: null,
+      onDialogPressCancel: null,
+
       isOpenDialog: false,
+      isOpenAlertDialog: false,
 
       selectedProduct: null,
       checkFilter: true,
@@ -94,11 +99,15 @@ class Gallery extends React.Component {
   }
 
   setProducts(data, callback) {
-    this.dispatch({ type: 'GALLERY_PAGE_PRODUCTS', payload: data }, callback);
+    this.dispatch({ type: 'products', payload: data }, callback);
   }
 
   setSelectedAttribute(data, callback) {
     this.dispatch({ type: 'GALLERY_PAGE_SELECTED_ATTRIBUTE', payload: data }, callback);
+  }
+
+  setAddedItemStatus(data, callback) {
+    this.dispatch({ type: 'IMPORT_PAGE_IS_ADDED_ITEMS_SUCCESS', payload: data }, callback);
   }
 
   handlerFilterByType(attrs) {
@@ -117,6 +126,11 @@ class Gallery extends React.Component {
     else this.setState({ isOpenDialog:true });
   }
 
+  handleAlertDialog() {
+    if(this.state.isOpenAlertDialog) this.setState({ isOpenAlertDialog:false });
+    else this.setState({ isOpenAlertDialog:true });
+  }
+
   getAttributes() {
     // Ex.
     let attrList = { 
@@ -125,7 +139,7 @@ class Gallery extends React.Component {
       // }
     };
 
-    let p = this.props.GalleryReducer.gallery_page_products;
+    let p = this.props.gallery.products;
     p = p ? p : [];
 
     if(p && p.length>0) {
@@ -134,7 +148,7 @@ class Gallery extends React.Component {
       p.map((o,i) => {
         attrNames.map((attrName, attrNameIndex) => {
           try {
-            if(!attrList.hasOwnProperty(attrName)) {
+            if(!has(attrList, attrName)) {
               attrList[attrName] = {}
             }
 
@@ -161,7 +175,7 @@ class Gallery extends React.Component {
       attrs[attrName].length>0 ? countSelected++ : null;
     });
 
-    let p = this.props.GalleryReducer.gallery_page_products;
+    let p = this.props.gallery.products;
     p = p ? p : [];
 
     return countSelected==0
@@ -175,7 +189,7 @@ class Gallery extends React.Component {
         let isMatched = 0;
 
         focusAttrs.map((attrName, attrNameIndex) => {
-          if(o.hasOwnProperty(attrName)) {
+          if(has(o, attrName)) {
 
             attrs[attrName].indexOf( typeof o[attrName]==='number' ? o[attrName].toString() : o[attrName]) >-1 
             ? isMatched++ 
@@ -188,12 +202,81 @@ class Gallery extends React.Component {
       });
   }
 
-  updateProductByModel(product, model, updateObj, callback) {
+  onOptimizeSavingItem(data) {
+    console.log('ReuseDialog optimize data:', data)
+    // Cleansing data
+    let id = null;
+    if(data) {
+      id = has(data, 'pid') ? data.pid : null;
+      delete data['pid'];
+      delete data['createdAt'];
+      delete data['updatedAt'];
+    }
+
+    // Require return object { id:string,data:object }
+    return { id:id, data:data }
+  }
+
+  onSaveImageGallery(data) {
+    console.log('On dialog save : ', data);
+  
+    // Normalize data
+    this.updateProductByModel(this.props.gallery.selectedCategory, data.id, data.data, () => {
+      this.setState({ isOpenDialog:false }, () => {
+        this.fetchProduct(this.props.gallery.selectedCategory)
+      })
+    })
+  }
+
+  onEditImageGallery(tile) {
+    console.log('selectedProduct (on edit):', tile)
+    this.setState({ selectedProduct:tile }, () => {
+      this.handleDialog()
+    });
+  }
+
+  onDeleteImageGallery(tile) {
+    if(tile && tile.pid) {
+
+      // Set dialog property
+      this.setState({ 
+        alertMsg:`Do you want to delete "${tile.model}" ?`,
+        deleteItemId: tile.pid,
+        onDialogPressOK: () => {
+          // Delete the item
+          this.deleteProductByModel(this.props.gallery.selectedCategory, this.state.deleteItemId)
+        }
+      }, () => {
+        // Open alert dialog
+        this.handleAlertDialog()
+      });
+
+    } else {
+      console.log('Unknown the ID')
+    }
+  }
+
+  deleteProductByModel(product, id) {
+    const url = `/api/v1/product_${product && product.name ? product.name : ''}`;
+    const data = { "method":"delete", "id": id }
+    rFul.post(url, data, (err, data) => {
+      if(err) {
+        // Show warning dialog
+        console.log('Delete item error : ', err);
+      } else {
+        // Show dialog
+        console.log('Delete item success : ', data);
+        this.fetchProduct(this.props.gallery.selectedCategory)
+      }
+    });
+  }
+
+  updateProductByModel(product, id, updateObj, callback) {
     const url = `/api/v1/product_${product && product.name ? product.name : ''}`;
     const data = {
       "method":"update",
       "update": {
-        "condition": { "model": model },
+        "condition": { "pid": id },
         "data": updateObj
       }
     };
@@ -232,7 +315,7 @@ class Gallery extends React.Component {
       this.setSelectedCategory(product, () => {
         if(product && product.name) {
           this.getProductByName(product.name, () => {
-            let p = this.props.GalleryReducer.gallery_page_products;
+            let p = this.props.gallery.products;
             p = p ? p : [];
 
             this.setAttributeList(this.getAttributes())
@@ -249,12 +332,24 @@ class Gallery extends React.Component {
   }
 
   componentDidMount() {
-    if(!this.props.GalleryReducer.gallery_page_categories) {
+
+    // alert('Cannot edit data yet')
+
+    // Fetch category list when 
+    // - First time access
+    // - Found(event) new item was added to database
+
+    if(!this.props.gallery.categories || (this.props.product && this.props.product.isAddedSuccess)) {
+
+      // Catch the event
+      this.setAddedItemStatus(false)
+
+      // Get category list
       this.getCategoryList((err) => {
         if(err) {
           console.log('Load category list error : ', err);
         } else {
-          const c = this.props.GalleryReducer.gallery_page_categories;
+          const c = this.props.gallery.categories;
           if(c && Array.isArray(c) && c.length > 0) {
             console.log('initial category : ', c[0].name)
             this.fetchProduct(c[0])
@@ -283,33 +378,18 @@ class Gallery extends React.Component {
             <Grid container spacing={3}>
   
               <Grid item xs={12}>
-                <Typography variant="body1">
-                  <strong>Categories</strong>
-                </Typography>
-                <br/>
-                <Combobox 
-                  selectedItem={
-                    this.props.GalleryReducer.gallery_page_selectedCategory 
-                    ? this.props.GalleryReducer.gallery_page_selectedCategory 
-                    : []
-                  }
-                  itemList={
-                    this.props.GalleryReducer.gallery_page_categories 
-                    ? this.props.GalleryReducer.gallery_page_categories 
-                    : []
-                  } 
+                <CategorySelector
+                  selectedItem={ this.props.gallery.selectedCategory ? this.props.gallery.selectedCategory : [] }
+                  itemList={ this.props.gallery.categories ? this.props.gallery.categories : [] } 
                   onChange={(selected) => {
                     console.log('Selected item in combobox :', selected);
-                    // Default value is getCategory()[0]
-                    if(selected){
-                      this.fetchProduct(selected)
-                    }
+                    if(selected){ this.fetchProduct(selected) }
                   }
                 }/>
               </Grid>
     
               {
-                this.props.GalleryReducer.gallery_page_filter && this.props.GalleryReducer.gallery_page_filter.length > 0
+                this.props.gallery.filter && this.props.gallery.filter.length > 0
                 ?
                   <>
                     <Grid item xs={12} md={4}>
@@ -322,52 +402,60 @@ class Gallery extends React.Component {
                         <br />
                         <StyleAttrList>
                         {
-                          this.props.GalleryReducer.gallery_page_attrList
+                          this.props.gallery.attrList
                           ? 
-                            Object.keys(this.props.GalleryReducer.gallery_page_attrList).map((attrName, attrObjIndex) => {
+                            Object.keys(this.props.gallery.attrList).map((attrName, attrObjIndex) => {
                               console.log(attrName);
                               return (
-                                <Checkboxes 
-                                  key={`checkbox-idx-${attrObjIndex}`}
-                                  title={attrName.toUpperCase()} 
-                                  attrs={this.props.GalleryReducer.gallery_page_attrList[attrName]} 
-                                  onSelect={(k,v) => {
-                                    let attrList = this.props.GalleryReducer.gallery_page_attrList;
-                                    let selectedAttr = this.props.GalleryReducer.gallery_page_selectedAttr;
-                                    selectedAttr = selectedAttr ? selectedAttr : {};
+                                ['pid', 'createdAt', 'updatedAt'].indexOf(attrName) < 0
+                                ? 
+                                  <Checkboxes 
+                                    key={`checkbox-idx-${attrObjIndex}`}
+                                    title={attrName.toUpperCase()} 
+                                    attrs={this.props.gallery.attrList[attrName]} 
+                                    onSelect={(k,v) => {
+                                      let attrList = this.props.gallery.attrList;
+                                      let selectedAttr = this.props.gallery.selectedAttr;
+                                      selectedAttr = selectedAttr ? selectedAttr : {};
 
-                                    if(v) {
+                                      if(v) {
 
-                                      if(!selectedAttr.hasOwnProperty(attrName)) {
-                                        selectedAttr[attrName] = [];
-                                      }
+                                        if(!has(selectedAttr, attrName)) {
+                                          selectedAttr[attrName] = [];
+                                        }
 
-                                      const specificIndex = selectedAttr[attrName].indexOf(k);
-                                      if(specificIndex<0) {
-                                        attrList[attrName][k] = true;
-                                        selectedAttr[attrName].push(k);
-                                        this.setAttributeList(attrList);
-                                      } else {
-                                        attrList[attrName][k] = false;
-                                        selectedAttr[attrName].splice(specificIndex, 1);
-                                        this.setAttributeList(attrList);
-                                      }
+                                        const specificIndex = selectedAttr[attrName].indexOf(k);
+                                        if(specificIndex<0) {
+                                          selectedAttr[attrName].push(k);
 
-                                    } else {
+                                          attrList[attrName][k] = true;
+                                          this.setAttributeList(attrList);
+                                        } else {
+                                          selectedAttr[attrName].splice(specificIndex, 1);
 
-                                      if(selectedAttr.hasOwnProperty(attrName)) {
-                                        let tmpIdx = selectedAttr[attrName].indexOf(k);
-                                        if(tmpIdx>-1) {
                                           attrList[attrName][k] = false;
-                                          selectedAttr[attrName].splice(tmpIdx, 1);
                                           this.setAttributeList(attrList);
                                         }
-                                      }
 
-                                    }
-                                    this.setSelectedAttribute(selectedAttr)
-                                    this.handlerFilterByType(selectedAttr);
-                                  }}/>
+                                      } else {
+
+                                        if(has(selectedAttr, attrName)) {
+                                          let tmpIdx = selectedAttr[attrName].indexOf(k);
+                                          if(tmpIdx>-1) {
+                                            selectedAttr[attrName].splice(tmpIdx, 1);
+
+                                            attrList[attrName][k] = false;
+                                            this.setAttributeList(attrList);
+                                          }
+                                        }
+
+                                      }
+                                      
+                                      this.setSelectedAttribute(selectedAttr)
+                                      this.handlerFilterByType(selectedAttr);
+                                    }}/>
+                                :
+                                  null
                               )
                             })
         
@@ -379,45 +467,53 @@ class Gallery extends React.Component {
         
                     <Grid item xs={12} md={8}>
                       <ImageGallery 
-                        filter={this.props.GalleryReducer.gallery_page_filter ? this.props.GalleryReducer.gallery_page_filter : []}
+                        filter={this.props.gallery.filter ? this.props.gallery.filter : []}
                         checkFilter={checkFilter}
-                        handleDialog={(tile)=>{
-                          this.setState({ selectedProduct:tile }, () => {
-                            this.handleDialog()
-                          });
-                        }}/>
+                        onEdit={(tile) => this.onEditImageGallery(tile)}
+                        onDelete={(tile) => this.onDeleteImageGallery(tile)}/>
                     </Grid>
                   </>
                 :
                   null
               }
             </Grid>
+
+            { /** Edit dialog */ }
   
             <ReuseDialog 
+              title={'Product'}
               isOpen={this.state.isOpenDialog} 
               content={null}
               form={selectedProduct}
               onClose={(isOpen) => { this.setState({ isOpenDialog:isOpen }) }}
-              onOK={(data) => {
-                console.log('On dialog save : ', data);
+              onOK={(data) => this.onSaveImageGallery(data)}
+              optimize={(data) => this.onOptimizeSavingItem(data)}
+            />
+
+            { /** Alert dialog */ }
   
-                // Normalize data
-                this.updateProductByModel(this.props.GalleryReducer.gallery_page_selectedCategory, data.model, data.data, () => {
-                  this.setState({ isOpenDialog:false }, () => {
-                    this.fetchProduct(this.props.GalleryReducer.gallery_page_selectedCategory)
-                  })
-                })
-              }}
-              optimize={(data) => {
-                // Cleansing data
-                let model = null;
-                if(data) {
-                  model = data.model ? data.model : null;
-                  delete data['model'];
-                  delete data['createdAt'];
-                  delete data['updatedAt'];
+            <ReuseDialog 
+              title={'System'}
+              isOpen={this.state.isOpenAlertDialog} 
+              content={this.state.alertMsg}
+              form={null}
+              onClose={() => {
+
+                if(typeof this.state.onDialogPressCancel === 'function') {
+                  this.state.onDialogPressCancel()
                 }
-                return { model:model, data:data }
+
+                this.setState({ isOpenAlertDialog:false })
+
+              }}
+              onOK={() => {
+
+                if(typeof this.state.onDialogPressOK === 'function') {
+                  this.state.onDialogPressOK()
+                }
+
+                this.setState({ isOpenAlertDialog:false })
+
               }}
             />
           

@@ -1,9 +1,15 @@
-const { Model, DataTypes, QueryTypes } = require('sequelize');
+const { Model, DataTypes } = require('sequelize');
+const uuid = require('uuid');
 
 class ProductLaptop extends Model {}
 
 ProductLaptop._sequelize = null;
 ProductLaptop._tableName = 'product_laptop';
+
+ProductLaptop.getUUID = function(namespace) {
+    // Create ID from namespace at current timestamp
+    return uuid.v5(namespace, uuid.v1());
+}
 
 ProductLaptop.isSequelized = function() {
     return new Promise((resolve, reject) => {
@@ -19,12 +25,13 @@ ProductLaptop.isSequelized = function() {
 ProductLaptop.initModel = function(sequelize) {
     this._sequelize = sequelize;
     this.init({
-        model: {
+        pid: {
             type: DataTypes.STRING,
             allowNull: false,
             primaryKey: true,
             unique: true
         },
+        model: { type: DataTypes.STRING, allowNull: false },
         category_id: { type: DataTypes.STRING, allowNull: false },
         url_image: { type: DataTypes.STRING },
         brand: { type: DataTypes.STRING },
@@ -78,11 +85,11 @@ ProductLaptop.set = function(updateObj) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(updateObj.condition && updateObj.data) {
+            if(has(updateObj, 'condition') && has(updateObj, 'data') && has(updateObj.condition, 'pid')) {
                 this.update(updateObj.data, { where:updateObj.condition })
                 .then((r) => resolve(r))
                 .catch((err) => reject(err));
-            } else { reject('Unknown condition or data') }
+            } else { reject('Unknown condition or id') }
         }).catch((err) => reject(err));
     })
     
@@ -94,44 +101,59 @@ ProductLaptop.add = function(newProduct) {
         this.isSequelized().then(() => {
             if(newProduct && newProduct.items) {
 
-                const items = Array.isArray(newProduct.items) ? newProduct.items : [];
-                let bulkItems = [];
-                
-                items.map((o,i) => {
-                    bulkItems.push({
-                        model: o.model ? o.model : '',
-                        category_id: o.category_id ? o.category_id : '',
-                        url_image: o.url_image ? o.url_image : '',
-                        brand: o.brand ? o.brand : '',
-                        version: o.version ? o.version : '',
-                        color: o.color ? o.color : '',
-                        price: o.price ? o.price : '',
-                        screen: o.screen ? o.screen : '',
-                        cpu: o.cpu ? o.cpu : '',
-                        processor: o.processor ? o.processor : '',
-                        memory: o.memory ? o.memory : '',
-                        graphic: o.graphic ? o.graphic : '',
-                        storage: o.storage ? o.storage : '',
-                        storage_type: o.storage_type ? o.storage_type : ''
-                    })
-                });
+                try {
 
-                this.bulkCreate(bulkItems, { returning: ['model'], ignoreDuplicates:true })
-                .then((r) => resolve(r))
-                .catch((err) => reject(err));
+                    const items = Array.isArray(newProduct.items) ? newProduct.items : [];
+                    let bulkItems = [];
+                    
+                    items.map((o,i) => {
 
+                        let price = 0;
+        
+                        try { price = o.price ? parseFloat(o.price) : 0 } 
+                        catch(err) { price = -1; }
+                        
+                        const model = o.model ? o.model : '';
+                        bulkItems.push({
+                            pid: this.getUUID(model),
+                            model: model,
+                            category_id: o.category_id ? o.category_id : '',
+                            url_image: o.url_image ? o.url_image : '',
+                            brand: o.brand ? o.brand : '',
+                            version: o.version ? o.version : '',
+                            color: o.color ? o.color : '',
+                            price: price,
+                            screen: o.screen ? o.screen : '',
+                            cpu: o.cpu ? o.cpu : '',
+                            processor: o.processor ? o.processor : '',
+                            memory: o.memory ? o.memory : '',
+                            graphic: o.graphic ? o.graphic : '',
+                            storage: o.storage ? o.storage : '',
+                            storage_type: o.storage_type ? o.storage_type : ''
+                        })
+                    });
+
+                    this.bulkCreate(bulkItems, { returning: ['model'], ignoreDuplicates:true })
+                    .then((r) => resolve(r))
+                    .catch((err) => reject(err));
+
+                } catch(err) {
+                    console.log(err)
+                    reject(err)
+                }
+            
             } else { reject('Unknown product info object pattern.') }
         }).catch((err) => reject(err));
     })
     
 }
 
-ProductLaptop.delete = function(model) {
+ProductLaptop.delete = function(id) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(model) {
-                this.destroy({ where : { model:model } })
+            if(id) {
+                this.destroy({ where : { pid:id } })
                 .then((r) => resolve(r && r > 0 ? 'Deleted.' : 'No record was deleted.'))
                 .catch((err) => reject(err));
             } else { reject('Unknown the id') }

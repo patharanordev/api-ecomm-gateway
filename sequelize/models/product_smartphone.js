@@ -1,9 +1,16 @@
-const { Model, DataTypes, QueryTypes } = require('sequelize');
+const { Model, DataTypes } = require('sequelize');
+const uuid = require('uuid');
+const has = require('has');
 
 class ProductSmartphone extends Model {}
 
 ProductSmartphone._sequelize = null;
 ProductSmartphone._tableName = 'product_smartphone';
+
+ProductSmartphone.getUUID = function(namespace) {
+    // Create ID from namespace at current timestamp
+    return uuid.v5(namespace, uuid.v1());
+}
 
 ProductSmartphone.isSequelized = function() {
     return new Promise((resolve, reject) => {
@@ -19,12 +26,13 @@ ProductSmartphone.isSequelized = function() {
 ProductSmartphone.initModel = function(sequelize) {
     this._sequelize = sequelize;
     this.init({
-        'model': {
+        pid: {
             type: DataTypes.STRING,
             allowNull: false,
             primaryKey: true,
             unique: true
         },
+        model: { type: DataTypes.STRING, allowNull: false },
         category_id: { type: DataTypes.STRING, allowNull: false },
         url_image: { type: DataTypes.STRING, allowNull: false },
         brand: { type: DataTypes.STRING },
@@ -71,19 +79,17 @@ ProductSmartphone.set = function(updateObj) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(updateObj.condition && updateObj.data) {
+            if(has(updateObj, 'condition') && has(updateObj, 'data') && has(updateObj.condition, 'pid')) {
                 this.update(updateObj.data, { where:updateObj.condition })
                 .then((r) => resolve(r))
                 .catch((err) => reject(err));
-            } else { reject('Unknown condition or data') }
+            } else { reject('Unknown condition or id') }
         }).catch((err) => reject(err));
     })
     
 }
 
 ProductSmartphone.add = function(newProduct) {
-
-    console.log(JSON.stringify(newProduct))
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
@@ -101,8 +107,10 @@ ProductSmartphone.add = function(newProduct) {
                         try { price = o.price ? parseFloat(o.price) : 0 } 
                         catch(err) { price = -1; }
                         
+                        const model = o.model ? o.model : '';
                         bulkItems.push({
-                            'model': o.model ? o.model : '',
+                            pid: this.getUUID(model),
+                            model: model,
                             category_id: o.category_id ? o.category_id : '',
                             url_image: o.url_image ? o.url_image : '',
                             brand: o.brand ? o.brand : '',
@@ -127,12 +135,12 @@ ProductSmartphone.add = function(newProduct) {
     
 }
 
-ProductSmartphone.delete = function(model) {
+ProductSmartphone.delete = function(id) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(model) {
-                this.destroy({ where : { model:model } })
+            if(id) {
+                this.destroy({ where : { pid:id } })
                 .then((r) => resolve(r && r > 0 ? 'Deleted.' : 'No record was deleted.'))
                 .catch((err) => reject(err));
             } else { reject('Unknown the id') }

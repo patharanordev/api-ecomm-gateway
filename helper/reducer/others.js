@@ -1,4 +1,4 @@
-const OtherReducer = (state={}, action) => {
+const others = (state={}, action) => {
     switch(action.type) {
 
         case 'FOO':
@@ -12,4 +12,4 @@ const OtherReducer = (state={}, action) => {
     }
 }
 
-export default OtherReducer;
+export default others;

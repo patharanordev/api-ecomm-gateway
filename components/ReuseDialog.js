@@ -10,10 +10,12 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 import humanizeString from 'humanize-string';
+import has from 'has';
 
 export default function ReuseDialog(props) {
 
-  const [form, setForm] = React.useState({});
+  const [id, setItemID] = React.useState('');
+  const [form, setForm] = React.useState(null);
   const [open, setOpen] = React.useState(props.isOpen);
 
   const handleClickCancel = () => {
@@ -25,10 +27,14 @@ export default function ReuseDialog(props) {
   const handleClickOK = () => {
     let optimizeData = null
     
-    // console.log('original form:', form)
+    console.log('original form:', form)
+
+    const newForm = {...form};
+    newForm['pid'] = id;
+
     if(typeof props.optimize === 'function') {
-      optimizeData = props.optimize(form)
-      // console.log('optimize form:', optimizeData)
+      optimizeData = props.optimize(newForm)
+      console.log('optimize form:', optimizeData)
     } else {
       optimizeData = form
     }
@@ -41,11 +47,27 @@ export default function ReuseDialog(props) {
   return (
       <Dialog 
         open={props.isOpen} 
-        onEnter={() => { setForm(props.form) }}
+        onEnter={() => {
+          if(props.form) {
+            const mainKey = {...props.form};
+            
+            if(has(mainKey, 'pid')) {
+              const pid = mainKey['pid']
+              console.log('pid:', pid)
+              setItemID(pid)
+            }
+
+            ['pid', 'category_id'].forEach((v) => {
+              console.log('v:', v)
+              if(has(mainKey, v)) delete mainKey[v];
+            })
+            setForm(mainKey)
+          }
+        }}
         onClose={() => { props.onClose ? props.onClose() : null }} 
         aria-labelledby="form-dialog-title">
 
-        <DialogTitle id="form-dialog-title">Product</DialogTitle>
+        <DialogTitle id="form-dialog-title">{ props.title ? props.title : '' }</DialogTitle>
         <DialogContent dividers={scroll === 'paper'}>
           <DialogContentText>
           {
@@ -53,24 +75,57 @@ export default function ReuseDialog(props) {
           }
           </DialogContentText>
 
-          <Grid container spacing={1}>
-          
-            <Grid item xs={12}>
-              <Grid container spacing={2}>
-                <Grid item xs={6} style={{ textAlign: '-webkit-center' }}>
-                  <Avatar src={form.url_image ? form.url_image : ''} style={{
-                    width: '100%',
-                    height: 'auto',
-                    borderRadius: '0%'
-                  }}/>
+          {
+            form
+            ?
+              <Grid container spacing={1}>
+              
+                <Grid item xs={12}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6} style={{ textAlign: '-webkit-center' }}>
+                      <Avatar src={form && form.url_image ? form.url_image : ''} style={{
+                        width: '100%',
+                        height: 'auto',
+                        borderRadius: '0%'
+                      }}/>
+                    </Grid>
+
+                    <Grid item xs={6}>
+                    {
+                  
+                      Object.keys(form).map((o,i) => {
+                        // console.log(o)
+                        return (
+                          (i>=0 && i<=5)
+                          ? 
+                            <TextField 
+                              key={`form-col-idx-${i}`}
+                              margin="dense" autoFocus fullWidth
+                              id={o} label={o ? humanizeString(o) : o} 
+                              disabled={['createdAt', 'updatedAt'].indexOf(o)>-1 ? true : false}
+                              value={form[o]}
+                              onChange={(e) => {
+                                console.log('form on change :', form)
+                                console.log('form on change e.target.id:', e.target.id)
+                                console.log('form on change e.target.value:', e.target.value)
+                                setForm({ ...form, [e.target.id]: e.target.value })
+                              }}
+                            />
+                          : 
+                              null
+                        )
+                      })
+                    }
+                    </Grid>
+                  </Grid>
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid item xs={12}>
                 {
                   Object.keys(form).map((o,i) => {
                     // console.log(o)
                     return (
-                      (i>=0 && i<=5) && o!='category_id'
+                      (i>=6)
                       ? 
                         <TextField 
                           key={`form-col-idx-${i}`}
@@ -85,42 +140,16 @@ export default function ReuseDialog(props) {
                             setForm({ ...form, [e.target.id]: e.target.value })
                           }}
                         />
-                      : 
+                      :
                           null
                     )
                   })
                 }
                 </Grid>
               </Grid>
-            </Grid>
-
-            <Grid item xs={12}>
-            {
-              Object.keys(form).map((o,i) => {
-                // console.log(o)
-                return (
-                  (i>=6) && o!='category_id'
-                  ? 
-                    <TextField 
-                      key={`form-col-idx-${i}`}
-                      margin="dense" autoFocus fullWidth
-                      id={o} label={o ? humanizeString(o) : o} 
-                      disabled={['createdAt', 'updatedAt'].indexOf(o)>-1 ? true : false}
-                      value={form[o]}
-                      onChange={(e) => {
-                        console.log('form on change :', form)
-                        console.log('form on change e.target.id:', e.target.id)
-                        console.log('form on change e.target.value:', e.target.value)
-                        setForm({ ...form, [e.target.id]: e.target.value })
-                      }}
-                    />
-                  :
-                      null
-                )
-              })
-            }
-            </Grid>
-          </Grid>
+            :
+              null
+          }
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClickCancel} color="primary">

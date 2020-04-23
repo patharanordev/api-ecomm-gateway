@@ -17,6 +17,7 @@ import Loading from '../components/Loading';
 import RESTFul from '../helper/RESTFul';
 import { Avatar } from '@material-ui/core';
 
+import CategorySelector from '../components/CategorySelector';
 // import tileData from './tileData';
 
 const rFul = RESTFul();
@@ -45,8 +46,8 @@ class ImportProduct extends React.Component {
     super(props)
 
     this.state = {
-      currentUser: props.UserReducer && props.UserReducer.currentUser
-      ? props.UserReducer.currentUser
+      currentUser: props.user && props.user.currentUser
+      ? props.user.currentUser
       : {},
 
       isOpenDialog: false,
@@ -74,6 +75,10 @@ class ImportProduct extends React.Component {
 
   setSelectedCategory(data, callback) {
     this.dispatch({ type: 'IMPORT_PAGE_SELECTED_CATEGORY', payload: data }, callback);
+  }
+
+  setAddedItemStatus(data, callback) {
+    this.dispatch({ type: 'IMPORT_PAGE_IS_ADDED_ITEMS_SUCCESS', payload: data }, callback);
   }
 
   handleDialog() {
@@ -124,12 +129,12 @@ class ImportProduct extends React.Component {
   }
 
   componentDidMount() {
-    if(!this.props.ImportProductReducer.import_page_categories) {
+    if(!this.props.product.categories) {
       this.getCategoryList((err) => {
         if(err) {
           console.log('Load category list error : ', err);
         } else {
-          const c = this.props.ImportProductReducer.import_page_categories;
+          const c = this.props.product.categories;
           if(c && Array.isArray(c) && c.length > 0) {
             console.log('initial category : ', c[0].name)
             this.setState({ isWaiting:false })
@@ -146,10 +151,6 @@ class ImportProduct extends React.Component {
       currentUser, selectedProduct, isWaiting
     } = this.state;
 
-    let {
-      import_page_categories, import_page_selectedCategory
-    } = this.props.ImportProductReducer
-
     return (
       <MenuComponent currentUser={currentUser} title='Import Product'>
       {
@@ -160,18 +161,23 @@ class ImportProduct extends React.Component {
             <Grid container spacing={3}>
   
               <Grid item xs={12}>
-                <Typography variant="body1">
-                  <strong>Categories</strong>
-                </Typography>
-                <br/>
-                <Combobox 
-                  selectedItem={import_page_selectedCategory}
-                  itemList={import_page_categories ? import_page_categories : []} 
+                <CategorySelector
+                  selectedItem={ this.props.product.selectedCategory }
+                  itemList={ this.props.product.categories ? this.props.product.categories : []} 
                   onChange={(selected) => {
                     console.log('Selected item in combobox :', selected);
-                    // Default value is getCategory()[0]
-                    // this.setState({ import_page_selectedCategory:selected })
                     this.setSelectedCategory(selected)
+
+                    const p = this.props.product.preparedData;
+                    if(p && Array.isArray(p) && p.length>0) {
+                      // TODO:
+                      // - Alert user that u don't save yet, do u want to save
+                    }
+
+                    // Clear old prepared data
+                    this.setPreparedData([], () => {
+                      
+                    })
                   }
                 }/>
               </Grid>
@@ -179,7 +185,7 @@ class ImportProduct extends React.Component {
               <Grid item xs={12} align={'right'}>
                 <Button disabled>Add Category</Button>
                 <Button variant="contained" color="primary" onClick={() => {
-                  this.getSchema(import_page_selectedCategory, () => {
+                  this.getSchema(this.props.product.selectedCategory, () => {
                     this.setState({ isOpenDialog:true })
                   })
                 }}>
@@ -197,9 +203,9 @@ class ImportProduct extends React.Component {
                     </Typography>
                   </Grid>
                 {
-                  this.props.ImportProductReducer.import_page_prepared_data
+                  this.props.product.preparedData
                   ?
-                    this.props.ImportProductReducer.import_page_prepared_data.map((v,i) => {
+                    this.props.product.preparedData.map((v,i) => {
                       return (
                         <Grid item xs={12} key={`prepare-grid-item-${i}`}>
                           <StylePaper key={`prepare-item-${i}`}>
@@ -234,7 +240,7 @@ class ImportProduct extends React.Component {
                                 textAlign: '-webkit-center'
                               }}>
                                 <IconButton aria-label="delete" onClick={() => {
-                                  let tmp = [...this.props.ImportProductReducer.import_page_prepared_data];
+                                  let tmp = [...this.props.product.preparedData];
                                   tmp.splice(i, 1)
                                   this.setPreparedData(tmp)
                                 }}>
@@ -256,9 +262,13 @@ class ImportProduct extends React.Component {
               <Grid item xs={12} align={'right'}>
                 <Button variant="contained" color="primary" onClick={() => {
                   this.setState({ isWaiting:true }, () => {
-                    this.addProductByModel(import_page_selectedCategory, this.props.ImportProductReducer.import_page_prepared_data, () => {
+                    this.addProductByModel(this.props.product.selectedCategory, this.props.product.preparedData, () => {
+                      // Hide waiting indicator
                       this.setState({ isWaiting:false })
+                      // Clear data preparation
                       this.setPreparedData([])
+                      // Notice found new item
+                      this.setAddedItemStatus(true)
                     })
                   })
                 }}>
@@ -269,6 +279,7 @@ class ImportProduct extends React.Component {
             </Grid>
   
             <ReuseDialog 
+              title={'Product'}
               isOpen={this.state.isOpenDialog} 
               content={null}
               form={selectedProduct}
@@ -276,7 +287,7 @@ class ImportProduct extends React.Component {
               onOK={(data) => {
                 console.log('On dialog save : ', data);
                 
-                let prepData = this.props.ImportProductReducer.import_page_prepared_data ? [...this.props.ImportProductReducer.import_page_prepared_data] : [];
+                let prepData = this.props.product.preparedData ? [...this.props.product.preparedData] : [];
                 prepData.push(data.data);
                 this.setPreparedData(prepData)
                 this.setState({ isOpenDialog:false });
@@ -288,8 +299,9 @@ class ImportProduct extends React.Component {
                   delete data['updatedAt'];
                 }
 
-                data['category_id'] = has(selectedProduct, 'category_id') 
-                ? selectedProduct.category_id
+                const c = this.props.product.selectedCategory;
+                data['category_id'] = has(c, 'category_id')
+                ? c.category_id
                 : ''
                 
                 return { data }

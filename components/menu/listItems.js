@@ -4,6 +4,8 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import DashboardIcon from '@material-ui/icons/Dashboard';
+import ViewComfyIcon from '@material-ui/icons/ViewComfy';
+import SaveAltIcon from '@material-ui/icons/SaveAlt';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 import PeopleIcon from '@material-ui/icons/People';
 import BarChartIcon from '@material-ui/icons/BarChart';
@@ -15,11 +17,11 @@ export const mainMenuList = [{
   label: 'Dashboard',
   link: '/dashboard'
 }, {
-  icon: <DashboardIcon />,
+  icon: <ViewComfyIcon />,
   label: 'Gallery',
   link: '/gallery'
 }, {
-  icon: <ShoppingCartIcon />,
+  icon: <SaveAltIcon />,
   label: 'Import',
   link: '/import-product'
 }, {
