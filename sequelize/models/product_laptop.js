@@ -1,5 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 const uuid = require('uuid');
+const has = require('has');
 
 class ProductLaptop extends Model {}
 
@@ -71,6 +72,8 @@ ProductLaptop.get = function(searchCondition, searchOption=null) {
             if(searchOption && searchOption.limit) stmt['limit'] = searchOption.limit;
             if(searchOption && searchOption.order) stmt['order'] = searchOption.order;
             if(searchOption && searchOption.group) stmt['group'] = searchOption.group;
+            if(searchOption && searchOption.attributes) stmt['attributes'] = searchOption.attributes;
+            if(searchOption && searchOption.include) stmt['include'] = searchOption.include;
 
             if(Object.keys(stmt).length>0) {
                 this.findAll(stmt).then((r) => resolve(r))

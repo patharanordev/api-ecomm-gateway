@@ -32,25 +32,25 @@ export default function Dashboard(props) {
       {/* Chart */}
       <Grid item xs={12} md={8} lg={9}>
         <Paper className={fixedHeightPaper}>
-          <Chart />
+          <Chart dailyAccount={props.dailyAccount}/>
         </Paper>
       </Grid>
       {/* Recent Deposits */}
       <Grid item xs={12} md={4} lg={3}>
         <Paper className={fixedHeightPaper}>
-          <Deposits />
+          <Deposits revenue={props.revenue}/>
         </Paper>
       </Grid>
       {/* Top User */}
-      <Grid item xs={12} md={4} lg={3}>
+      <Grid item xs={12} md={5} lg={4}>
         <Paper className={classes.paper}>
-          <TopUser />
+          <TopUser topUser={props.topUser}/>
         </Paper>
       </Grid>
       {/* Recent Orders */}
-      <Grid item xs={12} md={8} lg={9}>
+      <Grid item xs={12} md={7} lg={8}>
         <Paper className={classes.paper}>
-          <Orders />
+          <Orders recentOrder={props.recentOrder}/>
         </Paper>
       </Grid>
     </Grid>

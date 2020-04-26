@@ -1,5 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 const uuid = require('uuid');
+const has = require('has');
 
 class ProductCategories extends Model {}
 
@@ -62,6 +63,8 @@ ProductCategories.get = function(searchCondition, searchOption=null) {
             if(searchOption && searchOption.limit) stmt['limit'] = searchOption.limit;
             if(searchOption && searchOption.order) stmt['order'] = searchOption.order;
             if(searchOption && searchOption.group) stmt['group'] = searchOption.group;
+            if(searchOption && searchOption.attributes) stmt['attributes'] = searchOption.attributes;
+            if(searchOption && searchOption.include) stmt['include'] = searchOption.include;
 
             if(Object.keys(stmt).length>0) {
                 this.findAll(stmt).then((r) => resolve(r))
@@ -76,11 +79,11 @@ ProductCategories.set = function(updateObj) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(updateObj.condition && updateObj.data) {
+            if(has(updateObj, 'condition') && has(updateObj, 'data') && has(updateObj.condition, 'category_id')) {
                 this.update(updateObj.data, { where:updateObj.condition })
                 .then((r) => resolve(r))
                 .catch((err) => reject(err));
-            } else { reject('Unknown condition or data') }
+            } else { reject('Unknown condition or id') }
         }).catch((err) => reject(err));
     })
     

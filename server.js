@@ -106,7 +106,14 @@ app.prepare()
         if(theModel) {
             if(req.body && req.body.method) {
                 switch(req.body.method) {
-                    case 'select': responseHandler(theModel.get(req.body.condition), `/api/v1/${req.params.name}`, res); break;
+                    case 'select': responseHandler(
+                        theModel.get(
+                            req.body.condition, 
+                            req.body.options ? req.body.options : null
+                        ), 
+                        `/api/v1/${req.params.name}`
+                        , res); 
+                        break;
                     case 'create': responseHandler(theModel.add(req.body.data), `/api/v1/${req.params.name}`, res); break;
                     case 'delete': responseHandler(theModel.delete(req.body.id), `/api/v1/${req.params.name}`, res); break;
                     case 'drop': responseHandler(theModel.dropTable(), `/api/v1/${req.params.name}`, res); break;
@@ -121,6 +128,9 @@ app.prepare()
                         break;
                     }
                     case 'clear': responseHandler(theModel.clearData(), `/api/v1/${req.params.name}`, res); break;
+                    case 'sum': responseHandler(theModel.sumColumn(req.body.sum), `/api/v1/${req.params.name}`, res); break;
+                    case 'recentOrder': responseHandler(theModel.getRecentOrder(req.body.options), `/api/v1/${req.params.name}`, res); break;
+                    case 'accounting': responseHandler(theModel.getDailyAccount(req.body.options), `/api/v1/${req.params.name}`, res); break;
                     default:
                         res.status(400).json({ error: 'Unknown your method', data: null });
                         break;

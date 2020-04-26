@@ -34,11 +34,11 @@ ProductSmartphone.initModel = function(sequelize) {
         },
         model: { type: DataTypes.STRING, allowNull: false },
         category_id: { type: DataTypes.STRING, allowNull: false },
-        url_image: { type: DataTypes.STRING, allowNull: false },
+        url_image: { type: DataTypes.STRING },
         brand: { type: DataTypes.STRING },
         version: { type: DataTypes.STRING },
         color: { type: DataTypes.STRING },
-        price: { type: DataTypes.REAL }
+        price: { type: DataTypes.REAL, allowNull: false }
     }, { sequelize: this._sequelize, modelName: this._tableName });
 }
 
@@ -65,6 +65,8 @@ ProductSmartphone.get = function(searchCondition, searchOption=null) {
             if(searchOption && searchOption.limit) stmt['limit'] = searchOption.limit;
             if(searchOption && searchOption.order) stmt['order'] = searchOption.order;
             if(searchOption && searchOption.group) stmt['group'] = searchOption.group;
+            if(searchOption && searchOption.attributes) stmt['attributes'] = searchOption.attributes;
+            if(searchOption && searchOption.include) stmt['include'] = searchOption.include;
 
             if(Object.keys(stmt).length>0) {
                 this.findAll(stmt).then((r) => resolve(r))
