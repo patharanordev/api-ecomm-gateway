@@ -1,27 +1,9 @@
-const { Model, DataTypes } = require('sequelize');
-const uuid = require('uuid');
+const { Common, DataTypes } = require('./common');
 const has = require('has');
 
-class User extends Model {}
+class User extends Common {}
 
-User._sequelize = null;
 User._tableName = 'user';
-
-User.getUUID = function(namespace) {
-    // Create ID from namespace at current timestamp
-    return uuid.v5(namespace, uuid.v1());
-}
-
-User.isSequelized = function() {
-    return new Promise((resolve, reject) => {
-        try {
-            if(this._sequelize!=null) {
-                this._sequelize.sync().then(() => resolve())
-                .catch((err) => reject(err))
-            } else { reject('Sequelize was not initialized') }
-        } catch(err) { reject(err); }
-    })
-}
 
 User.initModel = function(sequelize) {
     this._sequelize = sequelize;
@@ -40,18 +22,6 @@ User.initModel = function(sequelize) {
         locale: { type: DataTypes.STRING },
         last_access: { type: DataTypes.DATE, allowNull: false }
     }, { sequelize: this._sequelize, modelName: this._tableName });
-}
-
-User.modelSchema = function() {
-    return new Promise((resolve, reject) => {
-        let schema = Object.keys(this.rawAttributes);
-
-        if(schema.indexOf('createdAt')>-1) schema.splice(schema.indexOf('createdAt'), 1)
-        if(schema.indexOf('updatedAt')>-1) schema.splice(schema.indexOf('updatedAt'), 1)
-
-        try { resolve(schema); } 
-        catch(err) { reject(err); }
-    });
 }
 
 User.get = function(searchCondition, searchOption=null) {
@@ -145,28 +115,6 @@ User.delete = function(user_id) {
                 .then((r) => resolve(r && r > 0 ? 'Deleted.' : 'No record was deleted.'))
                 .catch((err) => reject(err));
             } else { reject('Unknown the id') }
-        }).catch((err) => reject(err));
-    })
-    
-}
-
-User.dropTable = function() {
-
-    return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
-            this.drop().then((r) => resolve(r))
-            .catch((err) => reject(err));
-        }).catch((err) => reject(err));
-    })
-    
-}
-
-User.clearData = function() {
-
-    return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
-            this.truncate().then((r) => resolve(r))
-            .catch((err) => reject(err));
         }).catch((err) => reject(err));
     })
     

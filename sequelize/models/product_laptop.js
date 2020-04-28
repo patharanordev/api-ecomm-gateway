@@ -1,27 +1,9 @@
-const { Model, DataTypes } = require('sequelize');
-const uuid = require('uuid');
+const { Common, DataTypes } = require('./common');
 const has = require('has');
 
-class ProductLaptop extends Model {}
+class ProductLaptop extends Common {}
 
-ProductLaptop._sequelize = null;
 ProductLaptop._tableName = 'product_laptop';
-
-ProductLaptop.getUUID = function(namespace) {
-    // Create ID from namespace at current timestamp
-    return uuid.v5(namespace, uuid.v1());
-}
-
-ProductLaptop.isSequelized = function() {
-    return new Promise((resolve, reject) => {
-        try {
-            if(this._sequelize!=null) {
-                this._sequelize.sync().then(() => resolve())
-                .catch((err) => reject(err))
-            } else { reject('Sequelize was not initialized') }
-        } catch(err) { reject(err); }
-    })
-}
 
 ProductLaptop.initModel = function(sequelize) {
     this._sequelize = sequelize;
@@ -47,41 +29,6 @@ ProductLaptop.initModel = function(sequelize) {
         storage: { type: DataTypes.STRING },
         storage_type: { type: DataTypes.STRING }
     }, { sequelize: this._sequelize, modelName: this._tableName });
-}
-
-ProductLaptop.modelSchema = function() {
-    return new Promise((resolve, reject) => {
-        let schema = Object.keys(this.rawAttributes);
-
-        if(schema.indexOf('createdAt')>-1) schema.splice(schema.indexOf('createdAt'), 1)
-        if(schema.indexOf('updatedAt')>-1) schema.splice(schema.indexOf('updatedAt'), 1)
-
-        try { resolve(schema); } 
-        catch(err) { reject(err); }
-    });
-}
-
-ProductLaptop.get = function(searchCondition, searchOption=null) {
-
-    return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
-            let stmt = {};
-
-            if(searchCondition) stmt['where'] = searchCondition;
-            if(searchOption && searchOption.offset) stmt['offset'] = searchOption.offset;
-            if(searchOption && searchOption.limit) stmt['limit'] = searchOption.limit;
-            if(searchOption && searchOption.order) stmt['order'] = searchOption.order;
-            if(searchOption && searchOption.group) stmt['group'] = searchOption.group;
-            if(searchOption && searchOption.attributes) stmt['attributes'] = searchOption.attributes;
-            if(searchOption && searchOption.include) stmt['include'] = searchOption.include;
-
-            if(Object.keys(stmt).length>0) {
-                this.findAll(stmt).then((r) => resolve(r))
-                .catch((err) => reject(err));
-            } else { reject('Unknown filter condition pattern') }
-        }).catch((err) => reject(err));
-    })
-    
 }
 
 ProductLaptop.set = function(updateObj) {
@@ -160,28 +107,6 @@ ProductLaptop.delete = function(id) {
                 .then((r) => resolve(r && r > 0 ? 'Deleted.' : 'No record was deleted.'))
                 .catch((err) => reject(err));
             } else { reject('Unknown the id') }
-        }).catch((err) => reject(err));
-    })
-    
-}
-
-ProductLaptop.dropTable = function() {
-
-    return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
-            this.drop().then((r) => resolve(r))
-            .catch((err) => reject(err));
-        }).catch((err) => reject(err));
-    })
-    
-}
-
-ProductLaptop.clearData = function() {
-
-    return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
-            this.truncate().then((r) => resolve(r))
-            .catch((err) => reject(err));
         }).catch((err) => reject(err));
     })
     
