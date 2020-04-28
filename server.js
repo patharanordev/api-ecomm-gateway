@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const pg = require('pg');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
@@ -7,6 +8,7 @@ const serveStatic = require('serve-static');
 const cslg = require('connect-ensure-login');
 const path = require('path');
 const passport = require('passport');
+const pgSession = require('connect-pg-simple')(session);
 const GoogleStrategy = require( 'passport-google-oauth2' ).Strategy;
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -84,6 +86,22 @@ app.prepare()
 
     // Config middleware
     const server = express();
+    const pgPool = new pg.Pool({
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        database: process.env.DB_NAME,
+        password: process.env.DB_PASS,
+        port: process.env.DB_PORT,
+
+        // Config for Hiroku's server
+        ssl: {
+            require: true,
+            // Ref.: https://github.com/brianc/node-postgres/issues/2009
+            rejectUnauthorized: false,
+            // It should use "CA" but Heroku has not "CA"
+        },
+        keepAlive: true
+    });    
 
     // app.use(cors())
     server.use(bodyParser.json())
@@ -91,7 +109,16 @@ app.prepare()
     server.use(cookieParser());
 
     // Create session
-    server.use(session({ secret: process.env.SESSION_SECRET_KEY, resave: true, saveUninitialized: true }));
+    server.use(session({ 
+        store: new pgSession({
+            pool : pgPool,                // Connection pool
+            tableName : 'session'   // Use another table-name than the default "session" one
+        }),
+        secret: process.env.SESSION_SECRET_KEY, 
+        resave: true, 
+        saveUninitialized: true,
+        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
+    }));
 
     // Provide static file by searching in multi-directory
     server.use('/static', serveStatic(path.join(__dirname, 'rawdata')))

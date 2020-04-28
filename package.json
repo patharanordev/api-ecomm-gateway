@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "local": "export NODE_ENV=local && node server",
     "dev": "export NODE_ENV=development && node server",
-    "prod": "export NODE_ENV=production && next build && next start",
+    "pre:prod": "export NODE_ENV=production && node -r dotenv/config server.js dotenv_config_path=./.env",
+    "prod": "export NODE_ENV=production && node server",
     "start": "npm run dev"
   },
   "author": "PatharaNor",
@@ -20,6 +21,7 @@
     "body-parser": "^1.19.0",
     "clsx": "latest",
     "connect-ensure-login": "^0.1.1",
+    "connect-pg-simple": "^6.1.0",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
@@ -48,5 +50,6 @@
     "styled-components": "^5.1.0",
     "url": "^0.11.0",
     "uuid": "^7.0.3"
-  }
+  },
+  "devDependencies": {}
 }
