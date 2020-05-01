@@ -1,15 +1,16 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
-import GridList from '@material-ui/core/GridList';
-import GridListTile from '@material-ui/core/GridListTile';
-import GridListTileBar from '@material-ui/core/GridListTileBar';
-import IconButton from '@material-ui/core/IconButton';
-import EditIcon from '@material-ui/icons/Edit';
-import DeleteIcon from '@material-ui/icons/Delete';
-import Grow from '@material-ui/core/Grow';
-import Paper from '@material-ui/core/Paper';
 import NumberFormat from 'react-number-format';
+import { makeStyles } from '@material-ui/core/styles';
+
+import {
+  Edit as EditIcon,
+  Delete as DeleteIcon
+} from '@material-ui/icons';
+
+import {
+  Grid, GridList, GridListTile, GridListTileBar,
+  IconButton, Grow, Paper
+} from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
   gridList: {

@@ -1,21 +1,17 @@
 import React from 'react';
-import MenuComponent from '../components/menu/Menu';
-import ImageGallery from '../components/product-gallery/ImageGallery';
+import dynamic from 'next/dynamic';
+import has from 'has';
+import styled from 'styled-components';
 import { connect } from 'react-redux';
-
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import ReuseDialog from '../components/ReuseDialog';
-import Paper from '@material-ui/core/Paper';
-import Checkboxes from '../components/product-gallery/Checkboxes';
-import Loading from '../components/Loading';
-import CategorySelector from '../components/CategorySelector';
-
+import { Grid, Typography, Paper } from '@material-ui/core';
 import RESTFul from '../helper/RESTFul';
 
-import styled from 'styled-components';
-
-import has from 'has';
+const MenuComponent = dynamic( import('../components/menu/Menu'), { ssr: false } )
+const ImageGallery = dynamic( import('../components/product-gallery/ImageGallery'), { ssr: false } )
+const ReuseDialog = dynamic( import('../components/ReuseDialog'), { ssr: false } )
+const Checkboxes = dynamic( import('../components/product-gallery/Checkboxes'), { ssr: false } )
+const Loading = dynamic( import('../components/Loading'), { ssr: false } )
+const CategorySelector = dynamic( import('../components/CategorySelector'), { ssr: false } )
 
 // import tileData from './tileData';
 
@@ -383,6 +379,10 @@ class Gallery extends React.Component {
                   itemList={ this.props.gallery.categories ? this.props.gallery.categories : [] } 
                   onChange={(selected) => {
                     console.log('Selected item in combobox :', selected);
+                    // Clear selected attribute and attribute filtering
+                    this.setSelectedAttribute([])
+                    this.setAttributeFilter([])
+                    // Fetch product based on the category
                     if(selected){ this.fetchProduct(selected) }
                   }
                 }/>

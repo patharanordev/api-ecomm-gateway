@@ -1,24 +1,19 @@
 import React from 'react';
 import has from 'has';
-import MenuComponent from '../components/menu/Menu';
-import { connect } from 'react-redux';
-
-import IconButton from '@material-ui/core/IconButton';
-import DeleteIcon from '@material-ui/icons/Delete';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import ReuseDialog from '../components/ReuseDialog';
-import Paper from '@material-ui/core/Paper';
-import Button from '@material-ui/core/Button';
+import dynamic from 'next/dynamic';
 import styled from 'styled-components';
-
-import Combobox from '../components/product-gallery/Combobox';
-import Loading from '../components/Loading';
+import { connect } from 'react-redux';
+import DeleteIcon from '@material-ui/icons/Delete';
+import {
+  IconButton, Typography, Avatar,
+  Button, Paper, Grid
+} from '@material-ui/core'
 import RESTFul from '../helper/RESTFul';
-import { Avatar } from '@material-ui/core';
 
-import CategorySelector from '../components/CategorySelector';
-// import tileData from './tileData';
+const Loading = dynamic( import('../components/Loading'), { ssr: false } )
+const MenuComponent = dynamic( import('../components/menu/Menu'), { ssr: false } )
+const ReuseDialog = dynamic( import('../components/ReuseDialog'), { ssr: false } )
+const CategorySelector = dynamic( import('../components/CategorySelector'), { ssr: false } )
 
 const rFul = RESTFul();
 

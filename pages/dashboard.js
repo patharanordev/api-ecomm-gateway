@@ -1,10 +1,10 @@
 import React from 'react';
-import MenuComponent from '../components/menu/Menu';
-import DashboardComponent from '../components/dashboard/Dashboard';
+import dynamic from 'next/dynamic';
 import { connect } from 'react-redux';
-import has from 'has';
-
 import RESTFul from '../helper/RESTFul';
+
+const MenuComponent = dynamic( import('../components/menu/Menu'), { ssr: false } )
+const DashboardComponent = dynamic( import('../components/dashboard/Dashboard'), { ssr: false } )
 
 const rFul = RESTFul();
 
@@ -77,21 +77,23 @@ class Dashboard extends React.Component {
 
   updateUserInfo(callback) {
     const { user } = this.props;
-    rFul.post(`/api/v1/user`, { 
-      "method":"create", 
-      "data": {
-        "username": user.currentUser.displayName,
-        "email": "",
-        "social_id": user.currentUser.sub,
-        "provider": user.currentUser.provider,
-        "picture": user.currentUser.picture,
-        "locale": user.currentUser.locale,
-      }
-    }, (err, data) => {
-      if(typeof callback === 'function') {
-        callback(err, data);
-      }
-    });
+    if(user) {
+      rFul.post(`/api/v1/user`, { 
+        "method":"create", 
+        "data": {
+          "username": user.currentUser.displayName,
+          "email": "",
+          "social_id": user.currentUser.sub,
+          "provider": user.currentUser.provider,
+          "picture": user.currentUser.picture,
+          "locale": user.currentUser.locale,
+        }
+      }, (err, data) => {
+        if(typeof callback === 'function') {
+          callback(err, data);
+        }
+      });
+    }
   }
 
   componentDidMount() {
@@ -110,12 +112,27 @@ class Dashboard extends React.Component {
   render() {
     const { user } = this.props;
     const { dailyAccount, revenue, topUser, recentOrder } = this.state;
+
+    const tmpUser = {
+      displayName:'Test',
+      sub:'asdfghjkl',
+      picture:'',
+
+    }
     
-    return (
-      <MenuComponent currentUser={user.currentUser} title='Dashboard'>
-        <DashboardComponent dailyAccount={dailyAccount} revenue={revenue} topUser={topUser} recentOrder={recentOrder}/>
-      </MenuComponent>
-    )
+    if(MenuComponent) {
+      return (
+        <MenuComponent currentUser={user && user.currentUser ? user.currentUser : tmpUser} title='Dashboard'>
+        {
+          DashboardComponent
+          ? <DashboardComponent dailyAccount={dailyAccount} revenue={revenue} topUser={topUser} recentOrder={recentOrder}/>
+          : null
+        }
+        </MenuComponent>
+      )
+    } else {
+      return <div></div>
+    }
   }
 }
 

@@ -19,13 +19,13 @@ UserPayment.initModel = function(sequelize, associates) {
         user_id: { 
             type: DataTypes.STRING, allowNull: false, primaryKey: false,
             references: { model: this._associates['user'], key: 'user_id' },
-            onDelete: 'cascade', onUpdate: 'cascade',
+            onDelete: 'cascade', onUpdate: 'cascade', hooks: true,
             unique: 'unique-payment-per-user'
         },
         record_id: { 
             type: DataTypes.STRING, allowNull: false, primaryKey: false,
             references: { model: this._associates['payment'], key: 'record_id' },
-            onDelete: 'cascade', onUpdate: 'cascade',
+            onDelete: 'cascade', onUpdate: 'cascade', hooks: true,
             unique: 'unique-payment-per-user'
         },
     }, { sequelize: this._sequelize, modelName: this._tableName, underscored:true });

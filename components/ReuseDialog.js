@@ -1,16 +1,11 @@
 import React from 'react';
-import Grid from '@material-ui/core/Grid';
-import Avatar from '@material-ui/core/Avatar';
-import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-
 import humanizeString from 'humanize-string';
 import has from 'has';
+import {
+  Grid, Avatar, Button, TextField, 
+  Dialog, DialogActions, DialogContent,
+  DialogContentText, DialogTitle
+} from '@material-ui/core';
 
 export default function ReuseDialog(props) {
 

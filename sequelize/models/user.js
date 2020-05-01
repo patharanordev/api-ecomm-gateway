@@ -96,7 +96,7 @@ User.add = function(newUser) {
                     } else { 
                         // console.log('Data existing : ', JSON.stringify(isExist))
                         this.setLastAccess(isExist.rows[0].user_id)
-                        reject('Data existing...')
+                        resolve('Data existing...')
                     }
                 })
                 .catch((err) => reject(err)); 

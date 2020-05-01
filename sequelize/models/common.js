@@ -14,9 +14,9 @@ Common.isSequelized = function() {
     return new Promise((resolve, reject) => {
         try {
             if(this._sequelize!=null) {
-                // this._sequelize.sync().then(() => resolve())
-                // .catch((err) => reject(err))
-                resolve()
+                this._sequelize.sync().then(() => resolve())
+                .catch((err) => reject(err))
+                // resolve()
             } else { reject('Sequelize was not initialized') }
         } catch(err) { reject(err); }
     })
@@ -37,7 +37,7 @@ Common.modelSchema = function() {
 Common.get = function(searchCondition, searchOption=null) {
 
     return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
+        // this.isSequelized().then(() => {
             let stmt = {};
 
             if(searchCondition) stmt['where'] = searchCondition;
@@ -52,7 +52,7 @@ Common.get = function(searchCondition, searchOption=null) {
                 this.findAll(stmt).then((r) => resolve(r))
                 .catch((err) => reject(err));
             } else { reject('Unknown filter condition pattern') }
-        }).catch((err) => reject(err));
+        // }).catch((err) => reject(err));
     })
     
 }

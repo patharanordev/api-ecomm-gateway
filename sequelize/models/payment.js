@@ -17,7 +17,10 @@ Payment.initModel = function(sequelize, associates) {
         },
         order_id: { type: DataTypes.STRING, allowNull: false },
         timestamp: { type: DataTypes.DATE, allowNull: false },
-        user_id: { type: DataTypes.STRING, allowNull: false },
+        user_id: { 
+            type: DataTypes.STRING, allowNull: false, 
+            onDelete: 'cascade', hooks: true
+        },
         product_id: { type: DataTypes.STRING, allowNull: false },
         price: { type: DataTypes.REAL, allowNull: false },
         qty: { type: DataTypes.INTEGER, allowNull: false },

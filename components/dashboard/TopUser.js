@@ -1,17 +1,12 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import Title from './Title';
-
-import Grid from '@material-ui/core/Grid';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import Divider from '@material-ui/core/Divider';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import Avatar from '@material-ui/core/Avatar';
-
+import * as moment from 'moment';
 import Skeleton from '@material-ui/lab/Skeleton';
+import { makeStyles } from '@material-ui/core/styles';
+import Title from './Title';
+import {
+  Typography, Grid, Divider, Avatar, 
+  List, ListItem, ListItemText, ListItemAvatar
+} from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
   depositContext: {
@@ -77,7 +72,13 @@ export default function TopUser(props) {
                             >
                               Last access
                             </Typography>
-                            <small key={`last-update-${i}`}>{` — ${v.last_access ? v.last_access : ''}`}</small>
+                            <small key={`last-update-${i}`}>
+                            {` — ${
+                              v.last_access 
+                              ? moment(v.last_access).format('YYYY-MM-DD HH:mm') 
+                              : ''}`
+                            }
+                            </small>
                           </React.Fragment>
                         }
                       />

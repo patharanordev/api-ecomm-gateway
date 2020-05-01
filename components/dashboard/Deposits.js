@@ -1,9 +1,10 @@
 import React from 'react';
-import Link from '@material-ui/core/Link';
-import { makeStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
 import NumberFormat from 'react-number-format';
+import { makeStyles } from '@material-ui/core/styles';
 import Title from './Title';
+import {
+  Link, Typography
+} from '@material-ui/core'
 
 function preventDefault(event) {
   event.preventDefault();
@@ -25,6 +26,7 @@ export default function Deposits(props) {
           value={props.revenue ? props.revenue : 0} 
           displayType={'text'} 
           thousandSeparator={true} 
+          decimalScale={2}
           prefix={'$'} />
       </Typography>
       <Typography color="textSecondary" className={classes.depositContext}>

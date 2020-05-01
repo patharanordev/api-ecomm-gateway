@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const cors = require('cors');
 const pg = require('pg');
 const bodyParser = require('body-parser');
@@ -107,6 +108,7 @@ app.prepare()
     server.use(bodyParser.json())
     server.use(bodyParser.urlencoded({ extended: true }))
     server.use(cookieParser());
+    server.use(compression());
 
     // Create session
     server.use(session({ 
@@ -123,6 +125,7 @@ app.prepare()
     // Provide static file by searching in multi-directory
     server.use('/static', serveStatic(path.join(__dirname, 'rawdata')))
     server.use('/static', serveStatic(path.join(__dirname, 'public')))
+    server.use('/sw.js', serveStatic(path.join(__dirname, 'service-worker/sw.js')))
 
     // Prepare passport session
     server.use(passport.initialize());
@@ -199,6 +202,7 @@ app.prepare()
     // Bring this statement to last-1 statement to receive page name
     // by refer to 'pages' directory.
     server.get('/dashboard', cslg.ensureLoggedIn('/login/google'), (req, res) => {
+    // server.get('/dashboard', (req, res) => {
         console.log('in get - user:', req.user);
         // return clientRouteHandler(req, res);
         
