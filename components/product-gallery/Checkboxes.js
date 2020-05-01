@@ -1,11 +1,10 @@
 import React from 'react';
+import has from 'has';
 import { makeStyles } from '@material-ui/core/styles';
-import FormLabel from '@material-ui/core/FormLabel';
-import FormControl from '@material-ui/core/FormControl';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import Checkbox from '@material-ui/core/Checkbox';
+import {
+    FormLabel, FormControl, FormGroup, FormControlLabel,
+    FormHelperText, Checkbox
+} from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -46,7 +45,7 @@ export default function Checkboxes(props) {
                             return (
                                 <FormControlLabel
                                     key={`${props.title ? props.title : ''}-idx-${i}`}
-                                    control={<Checkbox checked={gilad} onChange={handleChange} name={o} />}
+                                    control={<Checkbox checked={has(state, o) ? state[o] : false} onChange={handleChange} name={o} />}
                                     label={o}
                                 />
                             )

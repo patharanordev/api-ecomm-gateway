@@ -1,7 +1,8 @@
 const { 
     User,
-    ProductCategories,
     Payment,
+    UserPayment,
+    ProductCategories,
     ProductSmartphone,
     ProductLaptop,
 } = require('./models/index');
@@ -19,10 +20,17 @@ db.setConfig({
 const sequelize = db.sequelize;
 
 User.initModel(sequelize);
+Payment.initModel(sequelize, { 'user':User, 'user_payment':UserPayment });
+UserPayment.initModel(sequelize, { 'user':User, 'payment':Payment });
 ProductCategories.initModel(sequelize);
-Payment.initModel(sequelize);
 ProductSmartphone.initModel(sequelize);
 ProductLaptop.initModel(sequelize);
+
+// Association
+UserPayment.belongsTo(User, { foreignKey:'user_id', targetKey:'user_id', as:'user_payer' })
+UserPayment.belongsTo(Payment, { foreignKey:'record_id', targetKey:'record_id', as:'pay_by_user' })
+User.belongsToMany(Payment, { through: UserPayment, foreignKey: 'user_id' })
+Payment.belongsToMany(User, { through: UserPayment, foreignKey: 'record_id' })
 
 module.exports = {
     sequelize,

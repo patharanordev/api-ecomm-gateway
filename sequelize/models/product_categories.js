@@ -1,19 +1,9 @@
-const { Model, DataTypes } = require('sequelize');
+const { Common, DataTypes } = require('./common');
+const has = require('has');
 
-class ProductCategories extends Model {}
+class ProductCategories extends Common {}
 
-ProductCategories._sequelize = null;
-
-ProductCategories.isSequelized = function() {
-    return new Promise((resolve, reject) => {
-        try {
-            if(this._sequelize!=null) {
-                this._sequelize.sync().then(() => resolve())
-                .catch((err) => reject(err))
-            } else { reject('Sequelize was not initialized') }
-        } catch(err) { reject(err); }
-    })
-}
+ProductCategories._tableName = 'product_categories';
 
 ProductCategories.initModel = function(sequelize) {
     this._sequelize = sequelize;
@@ -25,28 +15,22 @@ ProductCategories.initModel = function(sequelize) {
             unique: true
         },
         name: { type: DataTypes.STRING, allowNull: false },
+        title: { type: DataTypes.STRING, allowNull: false },
         description: { type: DataTypes.STRING, allowNull: false },
         url_manual: { type: DataTypes.STRING, allowNull: false },
         last_update: { type: DataTypes.DATE, allowNull: false }
-    }, { sequelize: this._sequelize, modelName: 'product_categories' });
+    }, { sequelize: this._sequelize, modelName: this._tableName });
 }
 
-ProductCategories.get = function(searchCondition, searchOption=null) {
+ProductCategories.set = function(updateObj) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            let stmt = {};
-
-            if(searchCondition) stmt['where'] = searchCondition;
-            if(searchOption && searchOption.offset) stmt['offset'] = searchOption.offset;
-            if(searchOption && searchOption.limit) stmt['limit'] = searchOption.limit;
-            if(searchOption && searchOption.order) stmt['order'] = searchOption.order;
-            if(searchOption && searchOption.group) stmt['group'] = searchOption.group;
-
-            if(Object.keys(stmt).length>0) {
-                this.findAll(stmt).then((r) => resolve(r))
+            if(has(updateObj, 'condition') && has(updateObj, 'data') && has(updateObj.condition, 'category_id')) {
+                this.update(updateObj.data, { where:updateObj.condition })
+                .then((r) => resolve(r))
                 .catch((err) => reject(err));
-            } else { reject('Unknown filter condition pattern') }
+            } else { reject('Unknown condition or id') }
         }).catch((err) => reject(err));
     })
     
@@ -74,8 +58,11 @@ ProductCategories.add = function(newCategory) {
                 this.findAndCountAll({ where: { name:newCategory.name } })
                 .then((isExist) => {
                     if(!(isExist.count && isExist.count > 0 ? true : false)) { 
+                        const name = newCategory.name ? newCategory.name : '';
                         this.create({
-                            name: newCategory.name ? newCategory.name : '' ,
+                            category_id: this.getUUID(name),
+                            name: name,
+                            title: newCategory.title ? newCategory.title : '' ,
                             description: newCategory.description ? newCategory.description : '' ,
                             url_manual: newCategory.url_manual ? newCategory.url_manual : '' ,
                             last_update: new Date()
@@ -100,28 +87,6 @@ ProductCategories.delete = function(category_id) {
                 .then((r) => resolve(r && r > 0 ? 'Deleted.' : 'No record was deleted.'))
                 .catch((err) => reject(err));
             } else { reject('Unknown the id') }
-        }).catch((err) => reject(err));
-    })
-    
-}
-
-ProductCategories.dropTable = function() {
-
-    return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
-            this.drop().then((r) => resolve(r))
-            .catch((err) => reject(err));
-        }).catch((err) => reject(err));
-    })
-    
-}
-
-ProductCategories.clearData = function() {
-
-    return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
-            this.truncate().then((r) => resolve(r))
-            .catch((err) => reject(err));
         }).catch((err) => reject(err));
     })
     

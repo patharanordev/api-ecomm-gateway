@@ -6,7 +6,7 @@ import withRedux from 'next-redux-wrapper';
 
 class eCommAdminApp extends App {
     static async getInitialProps({ Component, ctx }){
-        ctx.store.dispatch({ type:'FOO', payload:'foo' });
+        // ctx.store.dispatch({ type:'FOO', payload:'foo' });
         const pageProps = Component.getInitialProps 
         ? await Component.getInitialProps(ctx)
         : {}
