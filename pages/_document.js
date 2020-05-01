@@ -20,32 +20,12 @@ export default class eCommAdminDocument extends Document {
         <Head>
           {/* Step 5: Output the styles in the head  */}
           {this.props.styles}
-
-          { /* Facebook Analytic */ }
-          <script dangerouslySetInnerHTML={{__html: `
-            window.fbAsyncInit = function() {
-              FB.init({
-                appId      : '272000400485845',
-                cookie     : true,
-                xfbml      : true,
-                version    : 'v6.0'
-              });
-                
-              FB.AppEvents.logPageView();   
-                
-            };
-
-            (function(d, s, id){
-              var js, fjs = d.getElementsByTagName(s)[0];
-              if (d.getElementById(id)) {return;}
-              js = d.createElement(s); js.id = id;
-              js.src = "https://connect.facebook.net/en_US/sdk.js";
-              fjs.parentNode.insertBefore(js, fjs);
-            }(document, 'script', 'facebook-jssdk'));
-          `}} />
-
+          
           {/* PWA primary color */}
           {/* <meta name="theme-color" content={theme.palette.primary.main} /> */}
+
+          {/* manifest */}
+          {/* <link rel="manifest" href="/static/manifest.json" /> */}
           <link
             rel="stylesheet"
             href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"

@@ -1,26 +1,9 @@
-const { Model, DataTypes } = require('sequelize');
-const uuid = require('uuid');
+const { Common, DataTypes } = require('./common');
+const has = require('has');
 
-class ProductCategories extends Model {}
+class ProductCategories extends Common {}
 
-ProductCategories._sequelize = null;
 ProductCategories._tableName = 'product_categories';
-
-ProductCategories.getUUID = function(namespace) {
-    // Create ID from namespace at current timestamp
-    return uuid.v5(namespace, uuid.v1());
-}
-
-ProductCategories.isSequelized = function() {
-    return new Promise((resolve, reject) => {
-        try {
-            if(this._sequelize!=null) {
-                this._sequelize.sync().then(() => resolve())
-                .catch((err) => reject(err))
-            } else { reject('Sequelize was not initialized') }
-        } catch(err) { reject(err); }
-    })
-}
 
 ProductCategories.initModel = function(sequelize) {
     this._sequelize = sequelize;
@@ -39,48 +22,15 @@ ProductCategories.initModel = function(sequelize) {
     }, { sequelize: this._sequelize, modelName: this._tableName });
 }
 
-ProductCategories.modelSchema = function() {
-    return new Promise((resolve, reject) => {
-        let schema = Object.keys(this.rawAttributes);
-
-        if(schema.indexOf('createdAt')>-1) schema.splice(schema.indexOf('createdAt'), 1)
-        if(schema.indexOf('updatedAt')>-1) schema.splice(schema.indexOf('updatedAt'), 1)
-
-        try { resolve(schema); } 
-        catch(err) { reject(err); }
-    });
-}
-
-ProductCategories.get = function(searchCondition, searchOption=null) {
-
-    return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
-            let stmt = {};
-
-            if(searchCondition) stmt['where'] = searchCondition;
-            if(searchOption && searchOption.offset) stmt['offset'] = searchOption.offset;
-            if(searchOption && searchOption.limit) stmt['limit'] = searchOption.limit;
-            if(searchOption && searchOption.order) stmt['order'] = searchOption.order;
-            if(searchOption && searchOption.group) stmt['group'] = searchOption.group;
-
-            if(Object.keys(stmt).length>0) {
-                this.findAll(stmt).then((r) => resolve(r))
-                .catch((err) => reject(err));
-            } else { reject('Unknown filter condition pattern') }
-        }).catch((err) => reject(err));
-    })
-    
-}
-
 ProductCategories.set = function(updateObj) {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            if(updateObj.condition && updateObj.data) {
+            if(has(updateObj, 'condition') && has(updateObj, 'data') && has(updateObj.condition, 'category_id')) {
                 this.update(updateObj.data, { where:updateObj.condition })
                 .then((r) => resolve(r))
                 .catch((err) => reject(err));
-            } else { reject('Unknown condition or data') }
+            } else { reject('Unknown condition or id') }
         }).catch((err) => reject(err));
     })
     
@@ -123,28 +73,6 @@ ProductCategories.delete = function(category_id) {
                 .then((r) => resolve(r && r > 0 ? 'Deleted.' : 'No record was deleted.'))
                 .catch((err) => reject(err));
             } else { reject('Unknown the id') }
-        }).catch((err) => reject(err));
-    })
-    
-}
-
-ProductCategories.dropTable = function() {
-
-    return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
-            this.drop().then((r) => resolve(r))
-            .catch((err) => reject(err));
-        }).catch((err) => reject(err));
-    })
-    
-}
-
-ProductCategories.clearData = function() {
-
-    return new Promise((resolve, reject) => {
-        this.isSequelized().then(() => {
-            this.truncate().then((r) => resolve(r))
-            .catch((err) => reject(err));
         }).catch((err) => reject(err));
     })
     

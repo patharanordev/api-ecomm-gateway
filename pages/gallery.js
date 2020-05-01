@@ -1,19 +1,17 @@
 import React from 'react';
-import MenuComponent from '../components/menu/Menu';
-import ImageGallery from '../components/product-gallery/ImageGallery';
+import dynamic from 'next/dynamic';
+import has from 'has';
+import styled from 'styled-components';
 import { connect } from 'react-redux';
-
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import ReuseDialog from '../components/ReuseDialog';
-import Paper from '@material-ui/core/Paper';
-import Checkboxes from '../components/product-gallery/Checkboxes';
-import Combobox from '../components/product-gallery/Combobox';
-import Loading from '../components/Loading';
-
+import { Grid, Typography, Paper } from '@material-ui/core';
 import RESTFul from '../helper/RESTFul';
 
-import styled from 'styled-components';
+const MenuComponent = dynamic( import('../components/menu/Menu'), { ssr: false } )
+const ImageGallery = dynamic( import('../components/product-gallery/ImageGallery'), { ssr: false } )
+const ReuseDialog = dynamic( import('../components/ReuseDialog'), { ssr: false } )
+const Checkboxes = dynamic( import('../components/product-gallery/Checkboxes'), { ssr: false } )
+const Loading = dynamic( import('../components/Loading'), { ssr: false } )
+const CategorySelector = dynamic( import('../components/CategorySelector'), { ssr: false } )
 
 // import tileData from './tileData';
 
@@ -45,7 +43,6 @@ class Gallery extends React.Component {
     if(user) {
       console.log('ProductGallery got response : ', user)
       store.dispatch({ type:'CURRENT_USER', payload:user });
-      // return { currentUser:user }
     }
   }
 
@@ -53,28 +50,67 @@ class Gallery extends React.Component {
     super(props)
 
     this.state = {
-      currentUser: props.currentUser,
+      currentUser: props.user && props.user.currentUser
+      ? props.user.currentUser
+      : {},
+
+      alertMsg: '',
+      deleteItemId: null,
+      onDialogPressOK: null,
+      onDialogPressCancel: null,
 
       isOpenDialog: false,
-      categories: [],
-      products: [],
-      attrList: [],
+      isOpenAlertDialog: false,
 
-      selectedCategory: null,
       selectedProduct: null,
-      selectedAttr: {},
       checkFilter: true,
-      filter: [],
 
       isWaiting: true
     }
+  }
+
+  dispatch(action, callback) {
+    if(has(action, 'type') && has(action, 'payload')) {
+      this.props.dispatch({ type:action.type, payload:action.payload })
+      if(typeof callback === 'function') callback();
+    } else {
+      if(typeof callback === 'function') callback('Unknown the action!');
+    }
+  }
+
+  setCategory(data, callback) {
+    this.dispatch({ type: 'GALLERY_PAGE_CATEGORY_LIST', payload: data }, callback);
+  }
+
+  setSelectedCategory(data, callback) {
+    this.dispatch({ type: 'GALLERY_PAGE_SELECTED_CATEGORY', payload: data }, callback);
+  }
+
+  setAttributeFilter(data, callback) {
+    this.dispatch({ type: 'GALLERY_PAGE_ATTRIBUTE_FILTER', payload: data }, callback);
+  }
+
+  setAttributeList(data, callback) {
+    this.dispatch({ type: 'GALLERY_PAGE_ATTRIBUTE_LIST', payload: data }, callback);
+  }
+
+  setProducts(data, callback) {
+    this.dispatch({ type: 'products', payload: data }, callback);
+  }
+
+  setSelectedAttribute(data, callback) {
+    this.dispatch({ type: 'GALLERY_PAGE_SELECTED_ATTRIBUTE', payload: data }, callback);
+  }
+
+  setAddedItemStatus(data, callback) {
+    this.dispatch({ type: 'IMPORT_PAGE_IS_ADDED_ITEMS_SUCCESS', payload: data }, callback);
   }
 
   handlerFilterByType(attrs) {
     console.log('attrs : ', attrs);
     this.setState({ checkFilter:false }, () => {
       setTimeout(() => {
-        this.setState({ filter:this.filterByAttr(attrs) }, () => {
+        this.setAttributeFilter(this.filterByAttr(attrs), () => {
           this.setState({ checkFilter:true })
         });
       }, 300);
@@ -86,6 +122,11 @@ class Gallery extends React.Component {
     else this.setState({ isOpenDialog:true });
   }
 
+  handleAlertDialog() {
+    if(this.state.isOpenAlertDialog) this.setState({ isOpenAlertDialog:false });
+    else this.setState({ isOpenAlertDialog:true });
+  }
+
   getAttributes() {
     // Ex.
     let attrList = { 
@@ -94,13 +135,16 @@ class Gallery extends React.Component {
       // }
     };
 
-    if(this.state.products && this.state.products.length>0) {
-      let attrNames = Object.keys(this.state.products[0]);
+    let p = this.props.gallery.products;
+    p = p ? p : [];
 
-      this.state.products.map((o,i) => {
+    if(p && p.length>0) {
+      let attrNames = Object.keys(p[0]);
+
+      p.map((o,i) => {
         attrNames.map((attrName, attrNameIndex) => {
           try {
-            if(!attrList.hasOwnProperty(attrName)) {
+            if(!has(attrList, attrName)) {
               attrList[attrName] = {}
             }
 
@@ -127,18 +171,21 @@ class Gallery extends React.Component {
       attrs[attrName].length>0 ? countSelected++ : null;
     });
 
+    let p = this.props.gallery.products;
+    p = p ? p : [];
+
     return countSelected==0
     ? 
       (
         // Show all products is default if user didn't select anything
-        this.state.products
+        p
       )
     :
-      this.state.products.filter((o,i) => {
+      p.filter((o,i) => {
         let isMatched = 0;
 
         focusAttrs.map((attrName, attrNameIndex) => {
-          if(o.hasOwnProperty(attrName)) {
+          if(has(o, attrName)) {
 
             attrs[attrName].indexOf( typeof o[attrName]==='number' ? o[attrName].toString() : o[attrName]) >-1 
             ? isMatched++ 
@@ -151,12 +198,81 @@ class Gallery extends React.Component {
       });
   }
 
-  updateProductByModel(product, model, updateObj, callback) {
+  onOptimizeSavingItem(data) {
+    console.log('ReuseDialog optimize data:', data)
+    // Cleansing data
+    let id = null;
+    if(data) {
+      id = has(data, 'pid') ? data.pid : null;
+      delete data['pid'];
+      delete data['createdAt'];
+      delete data['updatedAt'];
+    }
+
+    // Require return object { id:string,data:object }
+    return { id:id, data:data }
+  }
+
+  onSaveImageGallery(data) {
+    console.log('On dialog save : ', data);
+  
+    // Normalize data
+    this.updateProductByModel(this.props.gallery.selectedCategory, data.id, data.data, () => {
+      this.setState({ isOpenDialog:false }, () => {
+        this.fetchProduct(this.props.gallery.selectedCategory)
+      })
+    })
+  }
+
+  onEditImageGallery(tile) {
+    console.log('selectedProduct (on edit):', tile)
+    this.setState({ selectedProduct:tile }, () => {
+      this.handleDialog()
+    });
+  }
+
+  onDeleteImageGallery(tile) {
+    if(tile && tile.pid) {
+
+      // Set dialog property
+      this.setState({ 
+        alertMsg:`Do you want to delete "${tile.model}" ?`,
+        deleteItemId: tile.pid,
+        onDialogPressOK: () => {
+          // Delete the item
+          this.deleteProductByModel(this.props.gallery.selectedCategory, this.state.deleteItemId)
+        }
+      }, () => {
+        // Open alert dialog
+        this.handleAlertDialog()
+      });
+
+    } else {
+      console.log('Unknown the ID')
+    }
+  }
+
+  deleteProductByModel(product, id) {
+    const url = `/api/v1/product_${product && product.name ? product.name : ''}`;
+    const data = { "method":"delete", "id": id }
+    rFul.post(url, data, (err, data) => {
+      if(err) {
+        // Show warning dialog
+        console.log('Delete item error : ', err);
+      } else {
+        // Show dialog
+        console.log('Delete item success : ', data);
+        this.fetchProduct(this.props.gallery.selectedCategory)
+      }
+    });
+  }
+
+  updateProductByModel(product, id, updateObj, callback) {
     const url = `/api/v1/product_${product && product.name ? product.name : ''}`;
     const data = {
       "method":"update",
       "update": {
-        "condition": { "model": model },
+        "condition": { "pid": id },
         "data": updateObj
       }
     };
@@ -174,9 +290,7 @@ class Gallery extends React.Component {
     const data = { "method":"select", "condition": {} };
     rFul.post(url, data, (err, data) => {
       if(!err) {
-        this.setState({ products:data }, () => {
-          if(typeof callback === 'function') { callback() }
-        })
+        this.setProducts(data, callback)
       }
     });
   }
@@ -186,42 +300,68 @@ class Gallery extends React.Component {
     const data = { "method":"select", "condition": {} };
     rFul.post(url, data, (err, data) => {
       if(!err) {
-        this.setState({ categories:data }, () => {
-          if(typeof callback === 'function') { callback() }
-        })
+        this.setCategory(data, callback)
       }
     });
   }
 
   fetchProduct(product){
-    this.setState({ isWaiting:true, selectedCategory:product }, () => {
-      if(product && product.name) {
-        this.getProductByName(product.name, () => {
-          this.setState({ attrList:this.getAttributes() })
-          this.setState({ filter:this.state.products }, () => {
-            this.setState({ isWaiting:false })
+    this.setState({ isWaiting:true }, () => {
+
+      this.setSelectedCategory(product, () => {
+        if(product && product.name) {
+          this.getProductByName(product.name, () => {
+            let p = this.props.gallery.products;
+            p = p ? p : [];
+
+            this.setAttributeList(this.getAttributes())
+            this.setAttributeFilter(p, () => {
+              this.setState({ isWaiting:false })
+            })
           })
-        })
-      } else {
-        console.log('Unknown product name.')
-      }
+        } else {
+          console.log('Unknown product name.')
+        }
+      })
+
     })
   }
 
   componentDidMount() {
-    this.getCategoryList(() => {
-      if(this.state.categories && Array.isArray(this.state.categories) && this.state.categories.length > 0) {
-        console.log('initial category : ', this.state.categories[0].name)
-        this.fetchProduct(this.state.categories[0])
-      }
-    })
+
+    // alert('Cannot edit data yet')
+
+    // Fetch category list when 
+    // - First time access
+    // - Found(event) new item was added to database
+
+    if(!this.props.gallery.categories || (this.props.product && this.props.product.isAddedSuccess)) {
+
+      // Catch the event
+      this.setAddedItemStatus(false)
+
+      // Get category list
+      this.getCategoryList((err) => {
+        if(err) {
+          console.log('Load category list error : ', err);
+        } else {
+          const c = this.props.gallery.categories;
+          if(c && Array.isArray(c) && c.length > 0) {
+            console.log('initial category : ', c[0].name)
+            this.fetchProduct(c[0])
+          }
+        }
+      })
+    } else {
+      this.setState({ isWaiting:false })
+    }
   }
 
   render() {
     let { 
       currentUser,
-      categories, attrList, filter, isWaiting, checkFilter,
-      selectedProduct, selectedCategory 
+      isWaiting, checkFilter,
+      selectedProduct 
     } = this.state;
 
     return (
@@ -234,25 +374,22 @@ class Gallery extends React.Component {
             <Grid container spacing={3}>
   
               <Grid item xs={12}>
-                <Typography variant="body1">
-                  <strong>Categories</strong>
-                </Typography>
-                <br/>
-                <Combobox 
-                  selectedItem={selectedCategory}
-                  itemList={categories ? categories : []} 
+                <CategorySelector
+                  selectedItem={ this.props.gallery.selectedCategory ? this.props.gallery.selectedCategory : [] }
+                  itemList={ this.props.gallery.categories ? this.props.gallery.categories : [] } 
                   onChange={(selected) => {
                     console.log('Selected item in combobox :', selected);
-                    // Default value is getCategory()[0]
-                    if(selected){
-                      this.fetchProduct(selected)
-                    }
+                    // Clear selected attribute and attribute filtering
+                    this.setSelectedAttribute([])
+                    this.setAttributeFilter([])
+                    // Fetch product based on the category
+                    if(selected){ this.fetchProduct(selected) }
                   }
                 }/>
               </Grid>
     
               {
-                filter && filter.length > 0
+                this.props.gallery.filter && this.props.gallery.filter.length > 0
                 ?
                   <>
                     <Grid item xs={12} md={4}>
@@ -265,29 +402,60 @@ class Gallery extends React.Component {
                         <br />
                         <StyleAttrList>
                         {
-                          attrList
+                          this.props.gallery.attrList
                           ? 
-                            Object.keys(attrList).map((attrName, attrObjIndex) => {
+                            Object.keys(this.props.gallery.attrList).map((attrName, attrObjIndex) => {
                               console.log(attrName);
                               return (
-                                <Checkboxes 
-                                  key={`checkbox-idx-${attrObjIndex}`}
-                                  title={attrName.toUpperCase()} attrs={attrList[attrName]} onSelect={(k,v) => {
-                                    let selectedAttr = this.state.selectedAttr;
-                                    if(v) {
-                                      if(!selectedAttr.hasOwnProperty(attrName)) {
-                                        selectedAttr[attrName] = [];
+                                ['pid', 'createdAt', 'updatedAt'].indexOf(attrName) < 0
+                                ? 
+                                  <Checkboxes 
+                                    key={`checkbox-idx-${attrObjIndex}`}
+                                    title={attrName.toUpperCase()} 
+                                    attrs={this.props.gallery.attrList[attrName]} 
+                                    onSelect={(k,v) => {
+                                      let attrList = this.props.gallery.attrList;
+                                      let selectedAttr = this.props.gallery.selectedAttr;
+                                      selectedAttr = selectedAttr ? selectedAttr : {};
+
+                                      if(v) {
+
+                                        if(!has(selectedAttr, attrName)) {
+                                          selectedAttr[attrName] = [];
+                                        }
+
+                                        const specificIndex = selectedAttr[attrName].indexOf(k);
+                                        if(specificIndex<0) {
+                                          selectedAttr[attrName].push(k);
+
+                                          attrList[attrName][k] = true;
+                                          this.setAttributeList(attrList);
+                                        } else {
+                                          selectedAttr[attrName].splice(specificIndex, 1);
+
+                                          attrList[attrName][k] = false;
+                                          this.setAttributeList(attrList);
+                                        }
+
+                                      } else {
+
+                                        if(has(selectedAttr, attrName)) {
+                                          let tmpIdx = selectedAttr[attrName].indexOf(k);
+                                          if(tmpIdx>-1) {
+                                            selectedAttr[attrName].splice(tmpIdx, 1);
+
+                                            attrList[attrName][k] = false;
+                                            this.setAttributeList(attrList);
+                                          }
+                                        }
+
                                       }
-                                      selectedAttr[attrName].push(k);
-                                    } else {
-                                      if(selectedAttr.hasOwnProperty(attrName)) {
-                                        let tmpIdx = selectedAttr[attrName].indexOf(k);
-                                        if(tmpIdx>-1) selectedAttr[attrName].splice(tmpIdx, 1)
-                                      }
-                                    }
-                                    this.setState({ selectedAttr:selectedAttr })
-                                    this.handlerFilterByType(selectedAttr);
-                                  }}/>
+                                      
+                                      this.setSelectedAttribute(selectedAttr)
+                                      this.handlerFilterByType(selectedAttr);
+                                    }}/>
+                                :
+                                  null
                               )
                             })
         
@@ -299,45 +467,53 @@ class Gallery extends React.Component {
         
                     <Grid item xs={12} md={8}>
                       <ImageGallery 
-                        filter={filter}
+                        filter={this.props.gallery.filter ? this.props.gallery.filter : []}
                         checkFilter={checkFilter}
-                        handleDialog={(tile)=>{
-                          this.setState({ selectedProduct:tile }, () => {
-                            this.handleDialog()
-                          });
-                        }}/>
+                        onEdit={(tile) => this.onEditImageGallery(tile)}
+                        onDelete={(tile) => this.onDeleteImageGallery(tile)}/>
                     </Grid>
                   </>
                 :
                   null
               }
             </Grid>
+
+            { /** Edit dialog */ }
   
             <ReuseDialog 
+              title={'Product'}
               isOpen={this.state.isOpenDialog} 
               content={null}
               form={selectedProduct}
               onClose={(isOpen) => { this.setState({ isOpenDialog:isOpen }) }}
-              onOK={(data) => {
-                console.log('On dialog save : ', data);
+              onOK={(data) => this.onSaveImageGallery(data)}
+              optimize={(data) => this.onOptimizeSavingItem(data)}
+            />
+
+            { /** Alert dialog */ }
   
-                // Normalize data
-                this.updateProductByModel(selectedCategory, data.model, data.data, () => {
-                  this.setState({ isOpenDialog:false }, () => {
-                    this.fetchProduct(selectedCategory)
-                  })
-                })
-              }}
-              optimize={(data) => {
-                // Cleansing data
-                let model = null;
-                if(data) {
-                  model = data.model ? data.model : null;
-                  delete data['model'];
-                  delete data['createdAt'];
-                  delete data['updatedAt'];
+            <ReuseDialog 
+              title={'System'}
+              isOpen={this.state.isOpenAlertDialog} 
+              content={this.state.alertMsg}
+              form={null}
+              onClose={() => {
+
+                if(typeof this.state.onDialogPressCancel === 'function') {
+                  this.state.onDialogPressCancel()
                 }
-                return { model:model, data:data }
+
+                this.setState({ isOpenAlertDialog:false })
+
+              }}
+              onOK={() => {
+
+                if(typeof this.state.onDialogPressOK === 'function') {
+                  this.state.onDialogPressOK()
+                }
+
+                this.setState({ isOpenAlertDialog:false })
+
               }}
             />
           
