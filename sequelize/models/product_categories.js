@@ -36,6 +36,20 @@ ProductCategories.set = function(updateObj) {
     
 }
 
+ProductCategories.set = function(updateObj) {
+
+    return new Promise((resolve, reject) => {
+        this.isSequelized().then(() => {
+            if(updateObj.condition && updateObj.data) {
+                this.update(updateObj.data, { where:updateObj.condition })
+                .then((r) => resolve(r))
+                .catch((err) => reject(err));
+            } else { reject('Unknown condition or data') }
+        }).catch((err) => reject(err));
+    })
+    
+}
+
 ProductCategories.add = function(newCategory) {
 
     return new Promise((resolve, reject) => {

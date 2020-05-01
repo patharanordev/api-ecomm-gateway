@@ -93,6 +93,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function MenuComponent(props) {
+
   const { currentUser } = props;
 
   const classes = useStyles();

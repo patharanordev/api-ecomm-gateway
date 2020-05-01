@@ -14,7 +14,6 @@ export default class eCommAdminDocument extends Document {
   render() {
     return (
       <html lang="en">
-
         <title>eCommAdmin</title>
 
         <Head>
@@ -64,7 +63,6 @@ eCommAdminDocument.getInitialProps = async (ctx) => {
   // 4. page.render
 
   // Render app and page and get the context of the page with collected side effects.
-
   // Step 1: Create an instance of ServerStyleSheet
   const sheets = new ServerStyleSheets();
   const originalRenderPage = ctx.renderPage;

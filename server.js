@@ -208,6 +208,7 @@ app.prepare()
         
         return app.render(req, res, '/dashboard', { user:req.user })
     })
+  
     server.get('/gallery', cslg.ensureLoggedIn('/login/google'), appRenderWithAuthHandler)
     server.get('/import-product', cslg.ensureLoggedIn('/login/google'), appRenderWithAuthHandler)
 

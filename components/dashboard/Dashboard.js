@@ -10,7 +10,6 @@ const Orders = dynamic(import('./Orders'), { ssr: false })
 const TopUser = dynamic(import('./TopUser'), { ssr: false })
 const Deposits = dynamic(import('./Deposits'), { ssr: false })
 
-
 const useStyles = makeStyles((theme) => ({
   paper: {
     padding: theme.spacing(2),
