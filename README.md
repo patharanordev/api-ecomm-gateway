@@ -141,6 +141,20 @@ Push it
 $ docker push patharanor/api-ecomm-gateway:SPECIAL_TAG
 ```
 
+### **Deployment**
+
+**Heroku**
+
+```
+$ heroku login
+$ heroku container:push web -a api-ecomm-gateway
+$ heroku container:release web -a api-ecomm-gateway
+```
+Checking via `Heroku` logs:
+```
+$ heroku logs -a api-ecomm-gateway
+```
+
 ## **License**
 
 MIT

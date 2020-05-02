@@ -9,8 +9,8 @@
     "dev": "export NODE_ENV=development && node server",
     "build": "next build",
     "pre:prod": "export NODE_ENV=production && npm run build && node -r dotenv/config server.js dotenv_config_path=./.env",
-    "prod": "export NODE_ENV=production && node server",
-    "start": "npm run dev"
+    "prod": "export NODE_ENV=production && npm run build && node server",
+    "start": "export NODE_ENV=production && node server"
   },
   "author": "PatharaNor",
   "license": "ISC",
