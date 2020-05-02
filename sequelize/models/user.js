@@ -111,7 +111,10 @@ User.delete = function(user_id) {
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
             if(user_id) {
-                this.destroy({ where : { user_id:user_id } })
+                this.destroy({ 
+                    where: { user_id:user_id },
+                    cascade: true
+                })
                 .then((r) => resolve(r && r > 0 ? 'Deleted.' : 'No record was deleted.'))
                 .catch((err) => reject(err));
             } else { reject('Unknown the id') }

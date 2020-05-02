@@ -172,7 +172,9 @@ export default function MenuComponent(props) {
                           key={`mainMenuIndex-${i}`}
                           onClick={() => {
                             Router.push(o.link ? o.link : '/signin')
-                          }}>
+                          }}
+                          disabled={o.isDisabled}
+                          >
                             <ListItemIcon>{o.icon}</ListItemIcon>
                             <ListItemText primary={o.label} />
                         </ListItem>
@@ -192,7 +194,9 @@ export default function MenuComponent(props) {
                           key={`secondaryMenuIndex-${i}`}
                           onClick={() => {
                             Router.push(o.link ? o.link : '/signin')
-                          }}>
+                          }}
+                          disabled={o.isDisabled}
+                          >
                             <ListItemIcon>{o.icon}</ListItemIcon>
                             <ListItemText primary={o.label} />
                         </ListItem>

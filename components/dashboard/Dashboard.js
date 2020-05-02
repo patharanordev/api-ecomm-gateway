@@ -6,9 +6,10 @@ import Paper from '@material-ui/core/Paper';
 import { makeStyles } from '@material-ui/core/styles';
 
 const Chart = dynamic(import('./Chart'), { ssr: false })
-const Orders = dynamic(import('./Orders'), { ssr: false })
 const TopUser = dynamic(import('./TopUser'), { ssr: false })
 const Deposits = dynamic(import('./Deposits'), { ssr: false })
+const OrderStatus = dynamic(import('./OrderStatus'), { ssr: false })
+const RecentOrders = dynamic(import('./RecentOrders'), { ssr: false })
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -31,7 +32,7 @@ export default function Dashboard(props) {
   return (
     <Grid container spacing={3}>
       {/* Chart */}
-      <Grid item xs={12} md={8} lg={9}>
+      <Grid item xs={12} md={6} lg={6}>
         <Paper className={fixedHeightPaper}>
           {
             Chart ? <Chart dailyAccount={props.dailyAccount}/> : null
@@ -39,11 +40,19 @@ export default function Dashboard(props) {
         </Paper>
       </Grid>
       {/* Recent Deposits */}
-      <Grid item xs={12} md={4} lg={3}>
+      <Grid item xs={12} md={3} lg={3}>
         <Paper className={fixedHeightPaper}>
-          {
-            Deposits ? <Deposits revenue={props.revenue}/> : null
-          }
+        {
+          OrderStatus ? <OrderStatus orderStatus={props.orderStatus}/> : null
+        }
+        </Paper>
+      </Grid>
+      {/* Recent Deposits */}
+      <Grid item xs={12} md={3} lg={3}>
+        <Paper className={fixedHeightPaper}>
+        {
+          Deposits ? <Deposits revenue={props.revenue}/> : null
+        }
         </Paper>
       </Grid>
       {/* Top User */}
@@ -58,7 +67,7 @@ export default function Dashboard(props) {
       <Grid item xs={12} md={7} lg={8}>
         <Paper className={classes.paper}>
           {
-            Orders ? <Orders recentOrder={props.recentOrder}/> : null
+            RecentOrders ? <RecentOrders recentOrder={props.recentOrder}/> : null
           }
         </Paper>
       </Grid>

@@ -159,7 +159,7 @@ app.prepare()
                     }
                     case 'clear': responseHandler(theModel.clearData(), `/api/v1/${req.params.name}`, res); break;
                     case 'sum': responseHandler(theModel.sumColumn(req.body.sum), `/api/v1/${req.params.name}`, res); break;
-                    case 'recentOrder': responseHandler(theModel.getRecentOrder(req.body.options), `/api/v1/${req.params.name}`, res); break;
+                    case 'order': responseHandler(theModel.getOrderItemBy(req.body.type, req.body.options), `/api/v1/${req.params.name}`, res); break;
                     case 'accounting': responseHandler(theModel.getDailyAccount(req.body.options), `/api/v1/${req.params.name}`, res); break;
                     default:
                         res.status(400).json({ error: 'Unknown your method', data: null });
@@ -211,6 +211,7 @@ app.prepare()
   
     server.get('/gallery', cslg.ensureLoggedIn('/login/google'), appRenderWithAuthHandler)
     server.get('/import-product', cslg.ensureLoggedIn('/login/google'), appRenderWithAuthHandler)
+    server.get('/order', cslg.ensureLoggedIn('/login/google'), appRenderWithAuthHandler)
 
     // Allow server using routes handler from 'nextjs' app (client)
     server.use(clientRouteHandler);

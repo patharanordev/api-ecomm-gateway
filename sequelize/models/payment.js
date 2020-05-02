@@ -4,6 +4,14 @@ class Payment extends Common {}
 
 Payment._tableName = 'payment';
 Payment._associates = {};
+Payment._orderStatus = {
+    PAYMENT_FAILED: 'Payment Failed',
+    WAITING_FOR_VERIFY: 'Waiting for Verified',
+    VERIFIED: 'Verified',
+    PACKING: 'Packing',
+    READY_TO_SHIP: 'Ready to Ship',
+    SHIPPED: 'Shipped'
+}
 
 Payment.initModel = function(sequelize, associates) {
     this._sequelize = sequelize;
@@ -15,13 +23,14 @@ Payment.initModel = function(sequelize, associates) {
             primaryKey: true,
             unique: true
         },
-        order_id: { type: DataTypes.STRING, allowNull: false },
-        timestamp: { type: DataTypes.DATE, allowNull: false },
         user_id: { 
             type: DataTypes.STRING, allowNull: false, 
             onDelete: 'cascade', hooks: true
         },
         product_id: { type: DataTypes.STRING, allowNull: false },
+        order_id: { type: DataTypes.STRING, allowNull: false },
+        order_status: { type: DataTypes.STRING, allowNull: false }, 
+        timestamp: { type: DataTypes.DATE, allowNull: false },
         price: { type: DataTypes.REAL, allowNull: false },
         qty: { type: DataTypes.INTEGER, allowNull: false },
         total: { type: DataTypes.REAL, allowNull: false },
@@ -62,7 +71,24 @@ Payment.sumColumn = function(sumObj) {
     
 }
 
-Payment.getRecentOrder = function(options) {
+Payment.getOrderItemBy = function(type, options) {
+    let opts = null;
+    switch(type) {
+        case 'list':
+            opts = this.getOrderList(options);
+            break;
+        case 'status':
+            opts = this.getOrderStatus(options);
+            break;
+        default:break;
+    }
+
+    return opts != null 
+    ? this.get({}, opts) : 
+    new Promise((resolve, reject) => reject('Unknown type of the method'))
+}
+
+Payment.getOrderList = function(options) {
     const userModelName = 'user';
     const opts = {
         include: [{
@@ -74,7 +100,7 @@ Payment.getRecentOrder = function(options) {
     if(options && options.order) opts['order'] = options.order
     if(options && options.limit) opts['limit'] = options.limit
 
-    return this.get({}, opts)
+    return opts
     
 }
 
@@ -94,6 +120,40 @@ Payment.getDailyAccount = function(options) {
 
     return this.get({}, opts)
     
+}
+
+// Ex. Order status
+// [
+//     {
+//       subject: 'W', status: 120, fullMark: 150,
+//     },
+//     {
+//       subject: 'R', status: 98, fullMark: 150,
+//     },
+//     {
+//       subject: 'P', status: 86, fullMark: 150,
+//     },
+//     {
+//       subject: 'S', status: 99, fullMark: 150,
+//     },
+//     {
+//       subject: 'V', status: 85, fullMark: 150,
+//     },
+//     {
+//       subject: 'F', status: 65, fullMark: 150,
+//     },
+// ]
+
+Payment.getOrderStatus = function(options) {
+    const opts = {
+        attributes: [
+            ['order_status', 'name'],
+            [this._sequelize.fn('COUNT', this._sequelize.col('order_status')), 'value']
+        ],
+        group: ['order_status']
+    }
+
+    return opts   
 }
 
 /**
@@ -162,6 +222,7 @@ Payment.add = function(newPayment) {
                             timestamp: ts,
                             user_id: newPayment.user_id,
                             product_id: o.product_id,
+                            order_status: this._orderStatus.WAITING_FOR_VERIFY,
                             price: o.price,
                             qty: o.qty,
                             total: totalInRecond,
@@ -198,7 +259,10 @@ Payment.delete = function(order_id) {
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
             if(order_id) {
-                this.destroy({ where : { order_id:order_id } })
+                this.destroy({ 
+                    where : { order_id:order_id },
+                    cascade: true
+                })
                 .then((r) => resolve(r && r > 0 ? 'Deleted.' : 'No record was deleted.'))
                 .catch((err) => reject(err));
             } else { reject('Unknown the id') }
