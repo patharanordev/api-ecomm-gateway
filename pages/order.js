@@ -27,25 +27,29 @@ class Order extends React.Component {
     }
   }
 
+  wait(isWaiting, callback) { 
+    this.setState({ isWaiting:isWaiting }, () => {
+      if(typeof callback === 'function') { callback() }
+    });
+  }
+
   getOrderItems() {
-    this.setState({ isWaiting:true }, () => {
+    this.wait(true, () => {
       const url = `/api/v1/payment`;
       const data = { "method":"order", "type":"list", "options": { "order": [ ["timestamp", "DESC"] ] } }
       rFul.post(url, data, (err, data) => {
-        this.setState({ isWaiting:false }, () => {
-          if(err) { console.log('Select order error : ', err); } 
-          else {
-            console.log('Get order status success : ', data);
-            this.setState({ orderItems:data })
-          }
-        });
+        if(err) { console.log('Select order error : ', err); } 
+        else {
+          console.log('Get order status success : ', data);
+          this.setState({ orderItems:data }, () => this.wait(false))
+        }
       });
     });
   }
 
   updateOrderItemStatus(e, record_id, callback) {
     if(record_id) {
-      this.setState({ isWaiting:true }, () => {
+      this.wait(true, () => {
         rFul.post(`/api/v1/payment`, { 
           "method":"update", 
           "update": {
@@ -53,13 +57,11 @@ class Order extends React.Component {
             "data": { order_status:e.target.value },
           }
         }, (err, data) => {
-
-          this.setState({ isWaiting:false }, () => {
+          this.wait(false, () => {
             if(typeof callback === 'function') {
               callback(err, data);
             }
           })
-
         });
       })
     }
@@ -94,7 +96,7 @@ class Order extends React.Component {
             : 
               null
           :
-            <Loading />
+            <Loading hasContainer={true}/>
         }
         </MenuComponent>
       )

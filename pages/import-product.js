@@ -198,7 +198,7 @@ class ImportProduct extends React.Component {
                     </Typography>
                   </Grid>
                 {
-                  this.props.product.preparedData
+                  this.props.product.preparedData && this.props.product.preparedData.length>0
                   ?
                     this.props.product.preparedData.map((v,i) => {
                       return (
@@ -249,7 +249,19 @@ class ImportProduct extends React.Component {
                       )
                     })
                   
-                  : null
+                  : 
+                    <Grid item xs={12}>
+                      <StylePaper>
+                        <Grid container spacing={1}>
+
+                          <Grid item xs={12} align={'center'}>
+                            <Typography variant='caption'>
+                              You don't have any items.
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      </StylePaper>
+                    </Grid>
                 }
                 </Grid>
               </Grid>
@@ -307,7 +319,7 @@ class ImportProduct extends React.Component {
       
         :  
           
-          <Loading />
+          <Loading hasContainer={true}/>
       }
       </MenuComponent>
     )

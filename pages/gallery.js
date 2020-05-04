@@ -59,13 +59,14 @@ class Gallery extends React.Component {
       onDialogPressOK: null,
       onDialogPressCancel: null,
 
-      isOpenDialog: false,
+      isDialogOpen: false,
       isOpenAlertDialog: false,
 
       selectedProduct: null,
       checkFilter: true,
 
-      isWaiting: true
+      isWaiting: true,
+      isDialogWaiting: false
     }
   }
 
@@ -118,8 +119,8 @@ class Gallery extends React.Component {
   }
 
   handleDialog() {
-    if(this.state.isOpenDialog) this.setState({ isOpenDialog:false });
-    else this.setState({ isOpenDialog:true });
+    if(this.state.isDialogOpen) this.setState({ isDialogOpen:false });
+    else this.setState({ isDialogOpen:true });
   }
 
   handleAlertDialog() {
@@ -215,11 +216,12 @@ class Gallery extends React.Component {
 
   onSaveImageGallery(data) {
     console.log('On dialog save : ', data);
-  
-    // Normalize data
-    this.updateProductByModel(this.props.gallery.selectedCategory, data.id, data.data, () => {
-      this.setState({ isOpenDialog:false }, () => {
-        this.fetchProduct(this.props.gallery.selectedCategory)
+    this.setState({ isDialogWaiting:true }, () => {
+      // Normalize data
+      this.updateProductByModel(this.props.gallery.selectedCategory, data.id, data.data, () => {
+        this.setState({ isDialogWaiting:false, isDialogOpen:false }, () => {
+          this.fetchProduct(this.props.gallery.selectedCategory)
+        })
       })
     })
   }
@@ -240,7 +242,13 @@ class Gallery extends React.Component {
         deleteItemId: tile.pid,
         onDialogPressOK: () => {
           // Delete the item
-          this.deleteProductByModel(this.props.gallery.selectedCategory, this.state.deleteItemId)
+          this.setState({ isDialogWaiting:true }, () => {
+            this.deleteProductByModel(this.props.gallery.selectedCategory, this.state.deleteItemId, () => {
+              this.setState({ isDialogWaiting:false, isOpenAlertDialog:false }, () => {
+                this.fetchProduct(this.props.gallery.selectedCategory)
+              })
+            })
+          })
         }
       }, () => {
         // Open alert dialog
@@ -252,7 +260,7 @@ class Gallery extends React.Component {
     }
   }
 
-  deleteProductByModel(product, id) {
+  deleteProductByModel(product, id, callback) {
     const url = `/api/v1/product_${product && product.name ? product.name : ''}`;
     const data = { "method":"delete", "id": id }
     rFul.post(url, data, (err, data) => {
@@ -262,7 +270,9 @@ class Gallery extends React.Component {
       } else {
         // Show dialog
         console.log('Delete item success : ', data);
-        this.fetchProduct(this.props.gallery.selectedCategory)
+        if(typeof callback === 'function') {
+          callback()
+        }
       }
     });
   }
@@ -482,18 +492,22 @@ class Gallery extends React.Component {
   
             <ReuseDialog 
               title={'Product'}
-              isOpen={this.state.isOpenDialog} 
               content={null}
               form={selectedProduct}
-              onClose={(isOpen) => { this.setState({ isOpenDialog:isOpen }) }}
+              isOpen={this.state.isDialogOpen} 
+              isWaiting={this.state.isDialogWaiting}
+              loadingDescription={'Sync to server...'}
               onOK={(data) => this.onSaveImageGallery(data)}
               optimize={(data) => this.onOptimizeSavingItem(data)}
+              onClose={(isOpen) => { this.setState({ isDialogOpen:isOpen }) }}
             />
 
             { /** Alert dialog */ }
   
             <ReuseDialog 
-              title={'System'}
+              title={'System'} 
+              isWaiting={this.state.isDialogWaiting}
+              loadingDescription={'Sync to server...'}
               isOpen={this.state.isOpenAlertDialog} 
               content={this.state.alertMsg}
               form={null}
@@ -512,7 +526,7 @@ class Gallery extends React.Component {
                   this.state.onDialogPressOK()
                 }
 
-                this.setState({ isOpenAlertDialog:false })
+                // this.setState({ isOpenAlertDialog:false })
 
               }}
             />
@@ -521,7 +535,7 @@ class Gallery extends React.Component {
       
         :  
           
-          <Loading />
+          <Loading hasContainer={true}/>
       }
       </MenuComponent>
     )
