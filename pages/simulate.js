@@ -10,7 +10,7 @@ const MenuComponent = dynamic( import('../components/menu/Menu'), { ssr: false }
 const ImageGallery = dynamic( import('../components/product-gallery/ImageGallery'), { ssr: false } )
 const ReuseDialog = dynamic( import('../components/ReuseDialog'), { ssr: false } )
 const BuyAmountDlg = dynamic( import('../components/simulate/BuyAmountDlg'), { ssr: false } )
-const ProductGallery = dynamic( import('../components/simulate/SimStore'), { ssr: false } )
+const SimStore = dynamic( import('../components/simulate/SimStore'), { ssr: false } )
 const Loading = dynamic( import('../components/Loading'), { ssr: false } )
 const CategorySelector = dynamic( import('../components/CategorySelector'), { ssr: false } )
 
@@ -121,16 +121,14 @@ class Simulate extends React.Component {
   }
 
   onAddToCart(data) {
+    let { cart } = this.props.simulate
     console.log('On add to cart : ', data);
+    if(!(cart && Array.isArray(cart))) { cart = []; }
 
-    // this.setState({ isDialogWaiting:true }, () => {
-    //   // Normalize data
-    //   this.updateProductByModel(this.props.gallery.selectedCategory, data.id, data.data, () => {
-    //     this.setState({ isDialogWaiting:false, isDialogOpen:false }, () => {
-    //       this.fetchProduct(this.props.gallery.selectedCategory)
-    //     })
-    //   })
-    // })
+    cart.push(data)
+    this.setCart(cart)
+
+    this.setState({ isDialogOpen:false })
   }
 
   updateProductByModel(product, id, updateObj, callback) {
@@ -223,20 +221,31 @@ class Simulate extends React.Component {
     } = this.state;
 
     return (
-      <MenuComponent currentUser={currentUser} title='Store Simulation'>
+      <MenuComponent currentUser={currentUser} title='Simulate'>
       {
         !isWaiting
 
         ?
           <>
             <Grid container spacing={3}>
-              <ProductGallery 
+              <SimStore 
+                cart={this.props.simulate.cart}
                 items={this.props.simulate.productsInStore}
                 onPressActionBtn={(data) => {
                   this.setState({ selectedProduct:data }, () => {
                     this.handleDialog()
                   })
-                }} />
+                }}
+                onCartPayment={(data) => { console.log('On cart click payment:', data) }}
+                onCartDelete={(objIndex) => {
+                  console.log('On cart click delete:', objIndex)
+
+                  let cart = this.props.simulate.cart
+                  if(cart && Array.isArray(cart)) cart.splice(objIndex, 1)
+                  
+                  this.setCart(cart)
+                }}
+                />
             </Grid>
 
             { /** Buy amount dialog */ }

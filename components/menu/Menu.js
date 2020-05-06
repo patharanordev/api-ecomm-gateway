@@ -133,7 +133,7 @@ export default function MenuComponent(props) {
                 isWidthUp('sm', width)
                 ?
                   <IconButton color="inherit">
-                    <Badge badgeContent={4} color="secondary">
+                    <Badge badgeContent={0} color="secondary" disabled>
                       <NotificationsIcon />
                     </Badge>
                   </IconButton>

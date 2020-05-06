@@ -1,18 +1,21 @@
 import React from 'react';
-import humanizeString from 'humanize-string';
 import has from 'has';
-import {
-  Grid, Avatar, Button, TextField, 
-  Dialog, DialogActions, DialogContent,
-  DialogContentText, DialogTitle
-} from '@material-ui/core';
 import Loading from '../Loading';
+import {
+  Grid, Button, Dialog, DialogActions, DialogContent,
+  DialogContentText, DialogTitle, ButtonGroup,
+  TextField
+} from '@material-ui/core';
+import { 
+  Add as AddIcon, 
+  Remove as RemoveIcon 
+} from '@material-ui/icons';
 
 export default function BuyAmountDlg(props) {
 
   const [id, setItemID] = React.useState('');
   const [form, setForm] = React.useState(null);
-  const [open, setOpen] = React.useState(props.isOpen);
+  const [count, setCount] = React.useState(1);
 
   const handleEnter = () => {
     if(props.form) {
@@ -38,14 +41,14 @@ export default function BuyAmountDlg(props) {
     }
   };
 
-  const handleClickOK = () => {
+  const handleClickAddToCart = () => {
     let optimizeData = null
     
     console.log('original form:', form)
 
     const newForm = {...form};
     newForm['pid'] = id;
-
+    
     if(typeof props.optimize === 'function') {
       optimizeData = props.optimize(newForm)
       console.log('optimize form:', optimizeData)
@@ -53,9 +56,16 @@ export default function BuyAmountDlg(props) {
       optimizeData = form
     }
 
+    // Set buy amount
+    optimizeData['amount'] = count
+
     if(typeof props.onOK === 'function') {
       props.onOK(optimizeData);
     }
+  };
+
+  const handleAmountChange = (e) => {
+    setCount(parseInt(e.target.value < 0 ? 0 : e.target.value))
   };
 
   return (
@@ -89,73 +99,40 @@ export default function BuyAmountDlg(props) {
                   form
                   ?
                     <Grid container spacing={1}>
+
+                      <Grid item xs={12}>
+                        <TextField fullWidth
+                          id="outlined-number"
+                          label="Amount"
+                          type="number"
+                          value={count}
+                          variant="outlined"
+                          onChange={handleAmountChange}
+                          InputLabelProps={{ shrink: true, }}
+                        />
+                      </Grid>
                     
                       <Grid item xs={12}>
-                        <Grid container spacing={2}>
-                          <Grid item xs={6} style={{ textAlign: '-webkit-center' }}>
-                            <Avatar src={form && form.url_image ? form.url_image : ''} style={{
-                              width: '100%',
-                              height: 'auto',
-                              borderRadius: '0%'
-                            }}/>
-                          </Grid>
-
-                          <Grid item xs={6}>
-                          {
-                        
-                            Object.keys(form).map((o,i) => {
-                              // console.log(o)
-                              return (
-                                (i>=0 && i<=5)
-                                ? 
-                                  <TextField 
-                                    key={`form-col-idx-${i}`}
-                                    margin="dense" autoFocus fullWidth
-                                    id={o} label={o ? humanizeString(o) : o} 
-                                    disabled={['createdAt', 'updatedAt'].indexOf(o)>-1 ? true : false}
-                                    value={form[o]}
-                                    onChange={(e) => {
-                                      console.log('form on change :', form)
-                                      console.log('form on change e.target.id:', e.target.id)
-                                      console.log('form on change e.target.value:', e.target.value)
-                                      setForm({ ...form, [e.target.id]: e.target.value })
-                                    }}
-                                  />
-                                : 
-                                    null
-                              )
-                            })
-                          }
-                          </Grid>
-                        </Grid>
+                        <ButtonGroup fullWidth>
+                          <Button
+                            aria-label="reduce"
+                            onClick={() => {
+                              setCount(Math.max(count - 1, 0));
+                            }}
+                          >
+                            <RemoveIcon fontSize="small" />
+                          </Button>
+                          <Button
+                            aria-label="increase"
+                            onClick={() => {
+                              setCount(count + 1);
+                            }}
+                          >
+                            <AddIcon fontSize="small" />
+                          </Button>
+                        </ButtonGroup>
                       </Grid>
 
-                      <Grid item xs={12}>
-                      {
-                        Object.keys(form).map((o,i) => {
-                          // console.log(o)
-                          return (
-                            (i>=6)
-                            ? 
-                              <TextField 
-                                key={`form-col-idx-${i}`}
-                                margin="dense" autoFocus fullWidth
-                                id={o} label={o ? humanizeString(o) : o} 
-                                disabled={['createdAt', 'updatedAt'].indexOf(o)>-1 ? true : false}
-                                value={form[o]}
-                                onChange={(e) => {
-                                  console.log('form on change :', form)
-                                  console.log('form on change e.target.id:', e.target.id)
-                                  console.log('form on change e.target.value:', e.target.value)
-                                  setForm({ ...form, [e.target.id]: e.target.value })
-                                }}
-                              />
-                            :
-                                null
-                          )
-                        })
-                      }
-                      </Grid>
                     </Grid>
                   :
                     null
@@ -165,8 +142,8 @@ export default function BuyAmountDlg(props) {
                 <Button onClick={handleClickCancel} color="primary">
                   Cancel
                 </Button>
-                <Button onClick={handleClickOK} color="primary">
-                  Save
+                <Button onClick={handleClickAddToCart} color="primary">
+                  Add to Cart
                 </Button>
               </DialogActions>
             </>
