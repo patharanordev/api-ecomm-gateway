@@ -13,7 +13,7 @@ const gallery = (state={}, action) => {
         case 'GALLERY_PAGE_ATTRIBUTE_LIST':
             return { ...state, attrList:action.payload };
 
-        case 'products':
+        case 'GALLERY_PAGE_PRODUCTS':
             return { ...state, products:action.payload };
 
         case 'GALLERY_PAGE_SELECTED_ATTRIBUTE':

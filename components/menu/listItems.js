@@ -7,7 +7,7 @@ import {
   ShoppingCart as ShoppingCartIcon,
   People as PeopleIcon, 
   BarChart as BarChartIcon, 
-  Assignment as AssignmentIcon
+  TouchApp as TouchAppIcon
 } from '@material-ui/icons'
 
 export const mainMenuList = [{
@@ -43,18 +43,8 @@ export const mainMenuList = [{
 }]
 
 export const secondaryMenuList = [{
-  icon: <AssignmentIcon />,
-  label: 'Current month',
-  link: '/',
-  isDisabled: true
-}, {
-  icon: <AssignmentIcon />,
-  label: 'Last quarter',
-  link: '/',
-  isDisabled: true
-}, {
-  icon: <AssignmentIcon />,
-  label: 'Year-end sale',
-  link: '/',
-  isDisabled: true
+  icon: <TouchAppIcon />,
+  label: 'Simulate',
+  link: '/simulate',
+  isDisabled: false
 }]

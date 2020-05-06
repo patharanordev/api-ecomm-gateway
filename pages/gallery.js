@@ -96,7 +96,7 @@ class Gallery extends React.Component {
   }
 
   setProducts(data, callback) {
-    this.dispatch({ type: 'products', payload: data }, callback);
+    this.dispatch({ type: 'GALLERY_PAGE_PRODUCTS', payload: data }, callback);
   }
 
   setSelectedAttribute(data, callback) {
@@ -347,7 +347,7 @@ class Gallery extends React.Component {
 
     if(!this.props.gallery.categories || (this.props.product && this.props.product.isAddedSuccess)) {
 
-      // Catch the event
+      // Catch the event (sync with import product)
       this.setAddedItemStatus(false)
 
       // Get category list

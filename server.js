@@ -212,6 +212,7 @@ app.prepare()
     server.get('/gallery', cslg.ensureLoggedIn('/login/google'), appRenderWithAuthHandler)
     server.get('/import-product', cslg.ensureLoggedIn('/login/google'), appRenderWithAuthHandler)
     server.get('/order', cslg.ensureLoggedIn('/login/google'), appRenderWithAuthHandler)
+    server.get('/simulate', cslg.ensureLoggedIn('/login/google'), appRenderWithAuthHandler)
 
     // Allow server using routes handler from 'nextjs' app (client)
     server.use(clientRouteHandler);
