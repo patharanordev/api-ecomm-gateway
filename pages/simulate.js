@@ -39,6 +39,19 @@ const StyleAttrList = styled(AttrList)`
   overflow-y: auto;
 `;
 
+const paymentTemplate = {
+  "method":"create",
+  "data": {
+    "user_id": null,
+    "payment": {
+      "method": "visa",
+      "card_id": "1234567890098765",
+      "shipping": "Thai"
+    },
+    "items": []
+  }
+}
+
 class Simulate extends React.Component {
   static async getInitialProps({ store, isServer, pathname, query:{ user } }) {
     if(user) {
@@ -213,6 +226,30 @@ class Simulate extends React.Component {
     }
   }
 
+  onCartPayment(data, callback) {
+    // Set request template
+    paymentTemplate.data.user_id = this.props.user.currentUser
+    data.forEach(element => {
+      paymentTemplate.data.items.push({
+        "product_id": element.id,
+        "price": element.data.price,
+        "qty": element.amount
+      })
+    })
+
+    console.log('On cart click payment:', paymentTemplate)
+
+    this.setState({ isWaiting:true }, () => {
+      const url = `/api/v1/payment`;
+      rFul.post(url, paymentTemplate, (err, data) => {
+        this.setState({ isWaiting:false })
+        if(typeof callback === 'function') {
+          callback(err, data);
+        }
+      });
+    })
+  }
+
   render() {
     let { 
       currentUser,
@@ -236,7 +273,14 @@ class Simulate extends React.Component {
                     this.handleDialog()
                   })
                 }}
-                onCartPayment={(data) => { console.log('On cart click payment:', data) }}
+                onCartPayment={(data) => this.onCartPayment(data, (err, data) => {
+                  if(err) {
+                    console.log('Payment error :', err)
+                  } else {
+                    console.log('Payment success :', data)
+                    this.setCart([])
+                  }
+                })}
                 onCartDelete={(objIndex) => {
                   console.log('On cart click delete:', objIndex)
 
@@ -255,47 +299,16 @@ class Simulate extends React.Component {
               content={null}
               form={selectedProduct}
               isOpen={this.state.isDialogOpen} 
-              isWaiting={this.state.isDialogWaiting}
-              loadingDescription={'Sync to server...'}
               onOK={(data) => this.onAddToCart(data)}
               optimize={(data) => this.onOptimizeCart(data)}
               onClose={(isOpen) => { this.setState({ isDialogOpen:isOpen }) }}
-            />
-
-            { /** Alert dialog */ }
-  
-            <ReuseDialog 
-              title={'System'} 
-              isWaiting={this.state.isDialogWaiting}
-              loadingDescription={'Sync to server...'}
-              isOpen={this.state.isOpenAlertDialog} 
-              content={this.state.alertMsg}
-              form={null}
-              onClose={() => {
-
-                if(typeof this.state.onDialogPressCancel === 'function') {
-                  this.state.onDialogPressCancel()
-                }
-
-                this.setState({ isOpenAlertDialog:false })
-
-              }}
-              onOK={() => {
-
-                if(typeof this.state.onDialogPressOK === 'function') {
-                  this.state.onDialogPressOK()
-                }
-
-                // this.setState({ isOpenAlertDialog:false })
-
-              }}
             />
           
           </>
       
         :  
           
-          <Loading hasContainer={true}/>
+          <Loading hasContainer={true} description="Sync to server..."/>
       }
       </MenuComponent>
     )

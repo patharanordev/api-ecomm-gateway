@@ -83,12 +83,13 @@ User.add = function(newUser) {
                 this.findAndCountAll({ where: { social_id:newUser.social_id } })
                 .then((isExist) => {
                     if(!(isExist.count && isExist.count > 0 ? true : false)) { 
+                        let provider = newUser.provider ? newUser.provider : ''
                         this.create({
-                            user_id: this.getUUID(newUser.social_id),
+                            user_id: `${newUser.social_id}|${provider}`,
                             username: newUser.username ? newUser.username : '',
                             email: newUser.email ? newUser.email : '',
                             social_id: newUser.social_id,
-                            provider: newUser.provider ? newUser.provider : '',
+                            provider: provider,
                             picture: newUser.picture ? newUser.picture : '',
                             locale: newUser.locale ? newUser.locale : '',
                             last_access: new Date()

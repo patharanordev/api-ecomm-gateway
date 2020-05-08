@@ -1,4 +1,5 @@
 const { Common, DataTypes } = require('./common');
+const has = require('has');
 
 class Payment extends Common {}
 
@@ -187,63 +188,73 @@ Payment.add = function(newPayment) {
                     let bulkItems = [];
                     let bulkRecords = [];
 
-                    const orderId = this.getUUID(newPayment.user_id);
-                    const items = Array.isArray(newPayment.items) ? newPayment.items : [];
-                    const ts = new Date();
-                    const payment = {
-                        method: newPayment.payment.method ? newPayment.payment.method : '',
-                        card_id: newPayment.payment.card_id ? newPayment.payment.card_id : '',
-                        shipping: newPayment.payment.shipping ? newPayment.payment.shipping : '',
-                    };
+                    const user_id = has(newPayment.user_id,'sub') && has(newPayment.user_id,'provider')
+                    ? `${newPayment.user_id.sub}|${newPayment.user_id.provider}`
+                    : null
                     
-                    items.map((o,i) => {
+                    if(user_id) {
+                        const orderId = this.getUUID(user_id);
+                        const items = Array.isArray(newPayment.items) ? newPayment.items : [];
 
-                        let totalInRecond = -1;
-                        try {
-                            totalInRecond = (parseFloat(o.price)*o.qty);
-                        } catch(err) {
-                            errStack.push(`Calculate total price error : ${JSON.stringify(err)}`);
-                            console.error('Calculate total price error :', err);
-                        }
+                        const ts = new Date();
+                        const payment = {
+                            method: newPayment.payment.method ? newPayment.payment.method : '',
+                            card_id: newPayment.payment.card_id ? newPayment.payment.card_id : '',
+                            shipping: newPayment.payment.shipping ? newPayment.payment.shipping : '',
+                        };
+                        
+                        items.map((o,i) => {
 
-                        const rid = this.getUUID(orderId);
+                            let totalInRecond = -1;
+                            try {
+                                totalInRecond = (parseFloat(o.price)*o.qty);
+                            } catch(err) {
+                                errStack.push(`Calculate total price error : ${JSON.stringify(err)}`);
+                                console.error('Calculate total price error :', err);
+                            }
 
-                        // Record
-                        bulkRecords.push({ 
-                            user_payment_id:this.getUUID(rid), 
-                            user_id:newPayment.user_id, 
-                            record_id:rid
-                        })
+                            const rid = this.getUUID(orderId);
 
-                        // Payment by record
-                        bulkItems.push({
-                            record_id: rid,
-                            order_id: orderId,
-                            timestamp: ts,
-                            user_id: newPayment.user_id,
-                            product_id: o.product_id,
-                            order_status: this._orderStatus.WAITING_FOR_VERIFY,
-                            price: o.price,
-                            qty: o.qty,
-                            total: totalInRecond,
-                            payment_method: payment.method,
-                            payment_card_id: payment.card_id,
-                            shipping: payment.shipping
-                        })
-                    });
+                            // Record
+                            bulkRecords.push({ 
+                                user_payment_id: this.getUUID(rid), 
+                                user_id: user_id, 
+                                record_id: rid
+                            })
 
-                    if(errStack.length<=0) {
-                        this.bulkCreate(bulkItems, { returning: ['order_id'] })
-                        .then((r) => {
-                            this._associates['user_payment']
-                            .record(bulkRecords)
-                            .then((r) => resolve(r))
+                            // Payment by record
+                            bulkItems.push({
+                                record_id: rid,
+                                order_id: orderId,
+                                timestamp: ts,
+                                user_id: user_id,
+                                product_id: o.product_id,
+                                order_status: this._orderStatus.WAITING_FOR_VERIFY,
+                                price: o.price,
+                                qty: o.qty,
+                                total: totalInRecond,
+                                payment_method: payment.method,
+                                payment_card_id: payment.card_id,
+                                shipping: payment.shipping
+                            })
+                        });
+
+                        if(errStack.length<=0) {
+                            this.bulkCreate(bulkItems, { returning: ['order_id'] })
+                            .then((r) => {
+                                this._associates['user_payment']
+                                .record(bulkRecords)
+                                .then((r) => resolve(r))
+                                .catch((err) => reject(err));
+                            })
                             .catch((err) => reject(err));
-                        })
-                        .catch((err) => reject(err));
+                        } else {
+                            reject(errStack)
+                        }
                     } else {
-                        reject(errStack)
+                        reject('Unknown user.')
                     }
+
                 } catch(err) {
                     reject(err)
                 }
