@@ -1,15 +1,17 @@
 import React from 'react';
 import * as moment from 'moment';
 import NumberFormat from 'react-number-format';
-import Skeleton from '@material-ui/lab/Skeleton';
 import { makeStyles } from '@material-ui/core/styles';
-import Title from './Title';
+import Skeleton from '../skeletons/TableBody';
+import Title from '../Title';
 import {
   Link, Table, TableBody, TableCell, TableHead, TableRow
 } from '@material-ui/core';
+import Router from 'next/router';
 
 function preventDefault(event) {
   event.preventDefault();
+  Router.push(event.target.href.replace(window.location.origin, ''));
 }
 
 const useStyles = makeStyles((theme) => ({
@@ -17,18 +19,6 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(3),
   },
 }));
-
-const defaultSkeleton = (index) => {
-  return (
-    <TableRow key={`order-index-${index}`}>
-      <TableCell><Skeleton variant="text" /></TableCell>
-      <TableCell><Skeleton variant="text" /></TableCell>
-      <TableCell><Skeleton variant="text" /></TableCell>
-      <TableCell><Skeleton variant="text" /></TableCell>
-      <TableCell align="right"><Skeleton variant="text" /></TableCell>
-    </TableRow>
-  )
-}
 
 export default function Orders(props) {
   const classes = useStyles();
@@ -45,20 +35,12 @@ export default function Orders(props) {
             <TableCell align="right">Sale Amount</TableCell>
           </TableRow>
         </TableHead>
-        <TableBody>
-          {
-            // rows.map((row) => (
-            //   <TableRow key={row.id}>
-            //     <TableCell>{row.date}</TableCell>
-            //     <TableCell>{row.name}</TableCell>
-            //     <TableCell>{row.shipTo}</TableCell>
-            //     <TableCell>{row.paymentMethod}</TableCell>
-            //     <TableCell align="right">{row.amount}</TableCell>
-            //   </TableRow>
-            // ))
+        {
 
-            props.recentOrder && Array.isArray(props.recentOrder)
-            ?
+          props.recentOrder && Array.isArray(props.recentOrder)
+          ?
+            <TableBody>
+            {
               props.recentOrder.map((o,i) => {
                 let price = -1;
                 try { price = parseFloat(o.price)*parseFloat(o.qty); } 
@@ -81,15 +63,14 @@ export default function Orders(props) {
                   </TableRow>
                 )
               })
-            :
-              [1,2,3,4,5].map((v,i) => {
-                return defaultSkeleton(i)
-              })
-          }
-        </TableBody>
+            }
+            </TableBody>
+          :
+            <Skeleton col={5}/>
+        }
       </Table>
       <div className={classes.seeMore}>
-        <Link color="primary" href="#" onClick={preventDefault}>
+        <Link color="primary" href='/order' onClick={preventDefault}>
           See more orders
         </Link>
       </div>

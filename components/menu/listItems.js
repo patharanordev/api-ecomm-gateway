@@ -7,45 +7,44 @@ import {
   ShoppingCart as ShoppingCartIcon,
   People as PeopleIcon, 
   BarChart as BarChartIcon, 
-  Assignment as AssignmentIcon
+  TouchApp as TouchAppIcon
 } from '@material-ui/icons'
 
 export const mainMenuList = [{
   icon: <DashboardIcon />,
   label: 'Dashboard',
-  link: '/dashboard'
+  link: '/dashboard',
+  isDisabled: false
 }, {
   icon: <ViewComfyIcon />,
   label: 'Gallery',
-  link: '/gallery'
+  link: '/gallery',
+  isDisabled: false
 }, {
   icon: <SaveAltIcon />,
   label: 'Import',
-  link: '/import-product'
+  link: '/import-product',
+  isDisabled: false
 }, {
   icon: <PeopleIcon />,
   label: 'Customers',
-  link: '/'
+  link: '/',
+  isDisabled: true
 }, {
   icon: <ShoppingCartIcon />,
-  label: 'Orders',
-  link: '/'
+  label: 'Order',
+  link: '/order',
+  isDisabled: false
 }, {
   icon: <BarChartIcon />,
   label: 'Reports',
-  link: '/'
+  link: '/',
+  isDisabled: true
 }]
 
 export const secondaryMenuList = [{
-  icon: <AssignmentIcon />,
-  label: 'Current month',
-  link: '/'
-}, {
-  icon: <AssignmentIcon />,
-  label: 'Last quarter',
-  link: '/'
-}, {
-  icon: <AssignmentIcon />,
-  label: 'Year-end sale',
-  link: '/'
+  icon: <TouchAppIcon />,
+  label: 'Simulate',
+  link: '/simulate',
+  isDisabled: false
 }]

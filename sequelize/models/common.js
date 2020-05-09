@@ -72,7 +72,7 @@ Common.clearData = function() {
 
     return new Promise((resolve, reject) => {
         this.isSequelized().then(() => {
-            this.truncate().then((r) => resolve(r))
+            this.truncate({ cascade:true }).then((r) => resolve(r))
             .catch((err) => reject(err));
         }).catch((err) => reject(err));
     })

@@ -8,8 +8,10 @@ import Copyright from '../CopyRight';
 import {
   CssBaseline, Drawer, Box, AppBar, Toolbar, List, Typography,
   Divider, IconButton, Badge, Container, Grid, Avatar, ListItem,
-  ListItemIcon, ListItemText, 
+  ListItemIcon, ListItemText
 } from '@material-ui/core';
+import withWidth, { isWidthUp } from '@material-ui/core/withWidth';
+import toRenderProps from 'recompose/toRenderProps';
 
 import {
   Menu as MenuIcon, 
@@ -18,6 +20,7 @@ import {
 } from '@material-ui/icons'
 
 const drawerWidth = 240;
+const WithWidth = toRenderProps(withWidth());
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -105,121 +108,147 @@ export default function MenuComponent(props) {
   // console.log(props);
 
   return (
-    <div className={classes.root}>
-      <CssBaseline />
-      <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
-        <Toolbar className={classes.toolbar}>
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
+    <WithWidth>
+      {({ width }) => (
+
+        <div className={classes.root}>
+          <CssBaseline />
+          <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
+
+            <Toolbar className={classes.toolbar}>
+              <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="open drawer"
+                onClick={handleDrawerOpen}
+                className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
+                { props.title ? props.title : '' }
+              </Typography>
+              
+              {
+                isWidthUp('sm', width)
+                ?
+                  <IconButton color="inherit">
+                    <Badge badgeContent={0} color="secondary" disabled>
+                      <NotificationsIcon />
+                    </Badge>
+                  </IconButton>
+                : null
+              }
+
+              <IconButton color="inherit">
+                {
+                  isWidthUp('sm', width)
+                  ?
+                    <Typography variant="body2" color="inherit" noWrap className={classes.title}>
+                      {currentUser && currentUser.displayName ? `${currentUser.displayName}` : ''}
+                    </Typography>
+                  :
+                    null
+                }
+
+                {
+                  currentUser && currentUser.picture 
+                  ? 
+                    <Avatar 
+                      alt={currentUser.displayName ? currentUser.displayName : ''} 
+                      src={currentUser.picture}
+                      style={{ marginLeft:'10px' }} />
+
+                  : 
+                    <Avatar style={{ marginLeft:'10px' }}>
+                    {
+                      currentUser.displayName ? currentUser.displayName[0] : ''
+                    }
+                    </Avatar>
+                }
+
+              </IconButton>
+              
+            </Toolbar>
+
+          </AppBar>
+          <Drawer
+            variant="permanent"
+            classes={{
+              paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
+            }}
+            open={open}
           >
-            <MenuIcon />
-          </IconButton>
-          <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
-            { props.title ? props.title : '' }
-          </Typography>
-          <IconButton color="inherit">
-            <Badge badgeContent={4} color="secondary">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
-          <IconButton color="inherit">
-            <Typography variant="body2" color="inherit" noWrap className={classes.title}>
-              {currentUser && currentUser.displayName ? `${currentUser.displayName}` : ''}
-            </Typography>
-
-            {
-              currentUser && currentUser.picture 
-              ? 
-                <Avatar 
-                  alt={currentUser.displayName ? currentUser.displayName : ''} 
-                  src={currentUser.picture}
-                  style={{ marginLeft:'10px' }} />
-
-              : 
-                <Avatar style={{ marginLeft:'10px' }}>
-                {
-                  currentUser.displayName ? currentUser.displayName[0] : ''
-                }
-                </Avatar>
-            }
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      <Drawer
-        variant="permanent"
-        classes={{
-          paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
-        }}
-        open={open}
-      >
-        <div className={classes.toolbarIcon}>
-          <IconButton onClick={handleDrawerClose}>
-            <ChevronLeftIcon />
-          </IconButton>
-        </div>
-        <Divider />
-        <List>
-            <div>
-            {
-                mainMenuList.map((o,i) => {
-                    return (
-                        <ListItem 
-                          button 
-                          key={`mainMenuIndex-${i}`}
-                          onClick={() => {
-                            Router.push(o.link ? o.link : '/signin')
-                          }}>
-                            <ListItemIcon>{o.icon}</ListItemIcon>
-                            <ListItemText primary={o.label} />
-                        </ListItem>
-                    )
-                })
-            }
+            <div className={classes.toolbarIcon}>
+              <IconButton onClick={handleDrawerClose}>
+                <ChevronLeftIcon />
+              </IconButton>
             </div>
-        </List>
-        <Divider />
-        <List>
-            <div>
-            {
-                secondaryMenuList.map((o,i) => {
-                    return (
-                        <ListItem 
-                          button 
-                          key={`secondaryMenuIndex-${i}`}
-                          onClick={() => {
-                            Router.push(o.link ? o.link : '/signin')
-                          }}>
-                            <ListItemIcon>{o.icon}</ListItemIcon>
-                            <ListItemText primary={o.label} />
-                        </ListItem>
-                    )
-                })
-            }
-            </div>
-      </List>
-      </Drawer>
-      <main className={classes.content}>
-        <div className={classes.appBarSpacer} />
-        <Container maxWidth="lg" className={classes.container}>
-          
-            <Grid container>
-                <Grid item xs={12}>
+            <Divider />
+            <List>
+                <div>
                 {
-                    /** Page content here */
-                    props.children
+                    mainMenuList.map((o,i) => {
+                        return (
+                            <ListItem 
+                              button 
+                              key={`mainMenuIndex-${i}`}
+                              onClick={() => {
+                                Router.push(o.link ? o.link : '/signin')
+                              }}
+                              disabled={o.isDisabled}
+                              >
+                                <ListItemIcon>{o.icon}</ListItemIcon>
+                                <ListItemText primary={o.label} />
+                            </ListItem>
+                        )
+                    })
                 }
+                </div>
+            </List>
+            <Divider />
+            <List>
+                <div>
+                {
+                    secondaryMenuList.map((o,i) => {
+                        return (
+                            <ListItem 
+                              button 
+                              key={`secondaryMenuIndex-${i}`}
+                              onClick={() => {
+                                Router.push(o.link ? o.link : '/signin')
+                              }}
+                              disabled={o.isDisabled}
+                              >
+                                <ListItemIcon>{o.icon}</ListItemIcon>
+                                <ListItemText primary={o.label} />
+                            </ListItem>
+                        )
+                    })
+                }
+                </div>
+          </List>
+          </Drawer>
+          <main className={classes.content}>
+            <div className={classes.appBarSpacer} />
+            <Container maxWidth="lg" className={classes.container}>
+              
+                <Grid container>
+                    <Grid item xs={12}>
+                    {
+                        /** Page content here */
+                        props.children
+                    }
+                    </Grid>
                 </Grid>
-            </Grid>
 
-          <Box pt={4}>
-            <Copyright />
-          </Box>
-        </Container>
-      </main>
-    </div>
+              <Box pt={4}>
+                <Copyright />
+              </Box>
+            </Container>
+          </main>
+        </div>
+      )}
+    </WithWidth>
   );
 }
