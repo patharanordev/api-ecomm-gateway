@@ -162,12 +162,24 @@ export default function ReuseDialog(props) {
                 }
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleClickCancel} color="primary">
-                  Cancel
-                </Button>
-                <Button onClick={handleClickOK} color="primary">
-                  Save
-                </Button>
+              {
+                props.onClose
+                ? 
+                  <Button onClick={handleClickCancel} color="primary">
+                  { props.labelCancelBtn ? props.labelCancelBtn : 'Cancel' }
+                  </Button>
+                :
+                  null
+              }
+              {
+                props.onOK
+                ?
+                  <Button onClick={handleClickOK} color="primary">
+                  { props.labelOKBtn ? props.labelOKBtn : 'Save' }
+                  </Button>
+                :
+                  null
+              }
               </DialogActions>
             </>
         }

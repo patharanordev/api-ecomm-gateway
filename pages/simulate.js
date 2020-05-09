@@ -1,43 +1,17 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import has from 'has';
-import styled from 'styled-components';
 import { connect } from 'react-redux';
-import { Grid, Typography, Paper } from '@material-ui/core';
+import { Grid } from '@material-ui/core';
 import RESTFul from '../helper/RESTFul';
 
 const MenuComponent = dynamic( import('../components/menu/Menu'), { ssr: false } )
-const ImageGallery = dynamic( import('../components/product-gallery/ImageGallery'), { ssr: false } )
 const ReuseDialog = dynamic( import('../components/ReuseDialog'), { ssr: false } )
 const BuyAmountDlg = dynamic( import('../components/simulate/BuyAmountDlg'), { ssr: false } )
 const SimStore = dynamic( import('../components/simulate/SimStore'), { ssr: false } )
 const Loading = dynamic( import('../components/Loading'), { ssr: false } )
-const CategorySelector = dynamic( import('../components/CategorySelector'), { ssr: false } )
-
-// import tileData from './tileData';
 
 const rFul = RESTFul();
-
-const PaperFlex = ({ className, children }) => (
-  <Paper className={className}>{children}</Paper>
-)
-
-const AttrList = ({ className, children }) => (
-  <div className={className}>{children}</div>
-)
-
-// 1 space is 8px
-const StylePaper = styled(PaperFlex)`
-  padding: 16px;
-  display: flex;
-  overflow: auto;
-  flex-direction: column;
-`;
-const StyleAttrList = styled(AttrList)`
-  width: 100%;
-  height: 300px;
-  overflow-y: auto;
-`;
 
 const paymentTemplate = {
   "method":"create",
@@ -274,12 +248,21 @@ class Simulate extends React.Component {
                   })
                 }}
                 onCartPayment={(data) => this.onCartPayment(data, (err, data) => {
+                  let msg = ''
                   if(err) {
-                    console.log('Payment error :', err)
+                    if(typeof err === 'string') {
+                      msg = 'Payment error : ' + err;
+                    } else {
+                      msg = 'Payment error : ' + JSON.stringify(err);
+                    }
                   } else {
-                    console.log('Payment success :', data)
+                    msg = 'Payment success';
                     this.setCart([])
                   }
+
+                  this.setState({ alertMsg:msg }, () => {
+                    this.handleAlertDialog()
+                  })
                 })}
                 onCartDelete={(objIndex) => {
                   console.log('On cart click delete:', objIndex)
@@ -304,6 +287,20 @@ class Simulate extends React.Component {
               onClose={(isOpen) => { this.setState({ isDialogOpen:isOpen }) }}
             />
           
+            { /** Alert dialog */ }
+  
+            <ReuseDialog 
+              title={'System'} 
+              isOpen={this.state.isOpenAlertDialog} 
+              content={this.state.alertMsg}
+              labelOKBtn={'OK'}
+              form={null}
+              onClose={null}
+              onOK={() => {
+                this.setState({ isOpenAlertDialog:false })
+              }}
+            />
+
           </>
       
         :  
