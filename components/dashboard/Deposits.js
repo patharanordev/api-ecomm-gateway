@@ -1,7 +1,7 @@
 import React from 'react';
 import NumberFormat from 'react-number-format';
 import { makeStyles } from '@material-ui/core/styles';
-import Title from './Title';
+import Title from '../Title';
 import {
   Link, Typography
 } from '@material-ui/core'

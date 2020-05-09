@@ -1,10 +1,3 @@
-
-/**
- * TODO
- * 
- * This page need to sync with server side.
- */
-
 import React from 'react';
 import Document, { Head, Main, NextScript } from 'next/document';
 import { ServerStyleSheets } from '@material-ui/core/styles';

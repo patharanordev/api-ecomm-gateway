@@ -23,7 +23,8 @@ class Dashboard extends React.Component {
     this.state = {
       dailyAccount: null,
       topUser: null,
-      recentOrder: null
+      recentOrder: null,
+      orderStatus: null
     }
   }
 
@@ -39,9 +40,21 @@ class Dashboard extends React.Component {
     });
   }
 
+  getOrderStatus() {
+    const url = `/api/v1/payment`;
+    const data = { "method":"order", "type":"status" }
+    rFul.post(url, data, (err, data) => {
+      if(err) { console.log('Get order status error : ', err); } 
+      else {
+        console.log('Get order status success : ', data);
+        this.setState({ orderStatus:data })
+      }
+    });
+  }
+
   getRecentOrders() {
     const url = `/api/v1/payment`;
-    const data = { "method":"recentOrder", "options": { "order": [ ["timestamp", "DESC"] ], "limit": 10 } }
+    const data = { "method":"order", "type":"list", "options": { "order": [ ["timestamp", "DESC"] ], "limit": 10 } }
     rFul.post(url, data, (err, data) => {
       if(err) { console.log('Select recent order error : ', err); } 
       else {
@@ -103,6 +116,7 @@ class Dashboard extends React.Component {
       else { console.log('Create user success : ', data); }
       this.getRevenue()
       this.getTopUser()
+      this.getOrderStatus()
       this.getRecentOrders()
       this.getDailyAccount()
     });
@@ -111,21 +125,19 @@ class Dashboard extends React.Component {
 
   render() {
     const { user } = this.props;
-    const { dailyAccount, revenue, topUser, recentOrder } = this.state;
+    const { dailyAccount, revenue, topUser, recentOrder, orderStatus } = this.state;
 
-    const tmpUser = {
-      displayName:'Test',
-      sub:'asdfghjkl',
-      picture:'',
-
-    }
-    
     if(MenuComponent) {
       return (
         <MenuComponent currentUser={user && user.currentUser ? user.currentUser : tmpUser} title='Dashboard'>
         {
           DashboardComponent
-          ? <DashboardComponent dailyAccount={dailyAccount} revenue={revenue} topUser={topUser} recentOrder={recentOrder}/>
+          ? <DashboardComponent 
+            dailyAccount={dailyAccount} 
+            revenue={revenue} 
+            topUser={topUser} 
+            recentOrder={recentOrder}
+            orderStatus={orderStatus}/>
           : null
         }
         </MenuComponent>
