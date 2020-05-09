@@ -525,7 +525,6 @@ class Gallery extends React.Component {
                 }
 
                 // this.setState({ isOpenAlertDialog:false })
-
               }}
             />
           
