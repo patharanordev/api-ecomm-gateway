@@ -1,6 +1,15 @@
-# **eComm API Gateway**
+# **eCommAdmin**
+[![version](https://img.shields.io/badge/version-v0.4.0-green.svg)](https://github.com/patharanordev/api-ecomm-gateway/commit/02bafca8f46c02edf31f873ef2e8cf07b7e1d2ae)
 
-Simple API gateway, handling authentication via Google passportjs with Node.js.
+eCommAdmin is a simple Dockerize monolithic application, handling authentication via Google passportjs with Node.js.
+
+OK, let's buy product in my store simulation [here](https://api-ecomm-gateway.herokuapp.com/simulate).
+
+![dashboard](./assets/ss-eCommAdmin.png)
+
+| Gallery page                           | Order page                           | Store Simulation                        |   
+| ------------------------------------ | ------------------------------------ | --------------------------------------- |
+| ![gallery](./assets/ss-gallery-page.png) | ![order](./assets/ss-order-page.png) | ![simulate](./assets/ss-simulate-page.png) |
 
 ## **Main Dependencies**
 
@@ -12,6 +21,41 @@ Simple API gateway, handling authentication via Google passportjs with Node.js.
  - `connect-ensure-login`
  - `passport`, `passport-google-oauth2`
  - `next`, `react`, `redux`
+ - `sequelize`
+
+## **Project Structure**
+
+```
+project
+.
+├── components
+│   └── [ANY STATELESS COMPONENTS]
+├── helper
+│   ├── reducer
+│   │   └── [ANY REDUCERS OF EACH PAGE IN "*.js" FILE FORMAT]
+│   ├── redux-store.js
+│   └── RESTFul.js
+├── pages
+│   └── [ANY STATEFUL PAGE COMPONENTS]
+├── public
+│   └── images
+│       └── [ANY IMAGES IN THE APPLICATION]
+├── sequelize
+│   ├── apis
+│   │   └── database.js
+│   ├── models
+│   │   └── [ANY DATABASE SCHEMAS]
+│   └── db-handler.js
+├── src
+│   └── theme.js
+├── .babelrc
+├── .dockerignore
+├── .gitignore
+├── Dockerfile
+├── package.json
+├── routes.js
+└── server.js
+```
 
 ## **Google Passport**
 
@@ -61,33 +105,54 @@ app.use(passport.initialize());
 app.use(passport.session());
 ```
 
-## **API**
+## **Custom API**
 
 **Create simple auth endpoint**
 
 ```js
-app.get('/login/google', 
+// Calling API without auth via POST method
+server.post('/api/v1/:name', (req, res) => {
+    // Handle APIs here
+});
+
+// ----- Set auth with Passport.js by using GoogleStrategy -----
+
+server.get('/login/google', 
     passport.authenticate('google', { 
         scope: [ 'https://www.googleapis.com/auth/plus.login',
             , 'https://www.googleapis.com/auth/plus.profile.emails.read' 
         ]
     })
 );
-app.get('/auth/google/callback',
+server.get('/auth/google/callback',
     passport.authenticate('google', { 
         failureRedirect: '/login/google',
         successRedirect: '/dashboard'
     })
 );
-app.get('/profile', cslg.ensureLoggedIn(), function(req, res){
-        res.send(req.user);
-    }
-);
+
+// ----- Access admin page with authentication -----
+
+// Calling API with auth
+server.post('/api/v1/:name', cslg.ensureLoggedIn('/login/google'), (req, res) => {
+    // Handle APIs here
+});
+
+// Page access
+server.get('/dashboard', cslg.ensureLoggedIn('/login/google'), (req, res) => {
+    console.log('in get - user:', req.user);
+    return app.render(req, res, '/dashboard', { user:req.user })
+})
+
 ```
 
-## **Dockerize**
+## **Usage**
 
-### **Build process** 
+Simple usage or run on production, I recommended you to use `Dockerize` on `Heroku`. Please see instruction below:
+
+### **Dockerize**
+
+#### **Build process** 
 
  1. Update `apk` on `node:12.16.1-alpine3.9`
  2. Set `--no-cache` 
@@ -95,12 +160,12 @@ app.get('/profile', cslg.ensureLoggedIn(), function(req, res){
  4. Set time zone to `Asia/Bangkok`
  5. Install service dependencies via `npm` 
 
-### **Build an image**
+#### **Build an image**
 
 ```bash
 $ docker build -t patharanor/api-ecomm-gateway:SPECIAL_TAG .
 ```
-### **Environment**
+#### **Environment**
 
  - `GOOGLE_APP_ID` - client ID of your Google App
  - `GOOGLE_APP_SECRET` - client secret of your Google App
@@ -108,7 +173,7 @@ $ docker build -t patharanor/api-ecomm-gateway:SPECIAL_TAG .
  - `PORT` - port number of the service
  - `SESSION_SECRET_KEY` - any word
 
-### **Run the image**
+#### **Run the image**
 
 Bind port to outsite(left) via port number `3000`.
 
@@ -128,7 +193,7 @@ $ docker run \
 patharanor/api-ecomm-gateway:SPECIAL_TAG
 ```
 
-### **Push to DockerHub**
+#### **Push to DockerHub**
 
 Login to DockerHub
 
@@ -141,7 +206,7 @@ Push it
 $ docker push patharanor/api-ecomm-gateway:SPECIAL_TAG
 ```
 
-### **Deployment**
+#### **Deployment**
 
 **Heroku**
 
@@ -155,6 +220,17 @@ Checking via `Heroku` logs:
 $ heroku logs -a api-ecomm-gateway
 ```
 
+#### **Database**
+
+**Heroku**
+
+I recommended `Postgres` on `Heroku`, see more detail [here](https://www.heroku.com/postgres)
+
 ## **License**
 
 MIT
+
+## **Donation**
+If this project help you reduce time to develop, you can give me a cup of coffee :) 
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A8YE92K9QM7NA)
