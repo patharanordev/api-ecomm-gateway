@@ -13,8 +13,6 @@ const Checkboxes = dynamic( import('../components/product-gallery/Checkboxes'), 
 const Loading = dynamic( import('../components/Loading'), { ssr: false } )
 const CategorySelector = dynamic( import('../components/CategorySelector'), { ssr: false } )
 
-// import tileData from './tileData';
-
 const rFul = RESTFul();
 
 const PaperFlex = ({ className, children }) => (
@@ -59,22 +57,14 @@ class Gallery extends React.Component {
       onDialogPressOK: null,
       onDialogPressCancel: null,
 
-<<<<<<< HEAD
       isDialogOpen: false,
-=======
-      isOpenDialog: false,
->>>>>>> master
       isOpenAlertDialog: false,
 
       selectedProduct: null,
       checkFilter: true,
 
-<<<<<<< HEAD
       isWaiting: true,
       isDialogWaiting: false
-=======
-      isWaiting: true
->>>>>>> master
     }
   }
 
@@ -104,11 +94,7 @@ class Gallery extends React.Component {
   }
 
   setProducts(data, callback) {
-<<<<<<< HEAD
     this.dispatch({ type: 'GALLERY_PAGE_PRODUCTS', payload: data }, callback);
-=======
-    this.dispatch({ type: 'products', payload: data }, callback);
->>>>>>> master
   }
 
   setSelectedAttribute(data, callback) {
@@ -131,13 +117,8 @@ class Gallery extends React.Component {
   }
 
   handleDialog() {
-<<<<<<< HEAD
     if(this.state.isDialogOpen) this.setState({ isDialogOpen:false });
     else this.setState({ isDialogOpen:true });
-=======
-    if(this.state.isOpenDialog) this.setState({ isOpenDialog:false });
-    else this.setState({ isOpenDialog:true });
->>>>>>> master
   }
 
   handleAlertDialog() {
@@ -233,20 +214,12 @@ class Gallery extends React.Component {
 
   onSaveImageGallery(data) {
     console.log('On dialog save : ', data);
-<<<<<<< HEAD
     this.setState({ isDialogWaiting:true }, () => {
       // Normalize data
       this.updateProductByModel(this.props.gallery.selectedCategory, data.id, data.data, () => {
         this.setState({ isDialogWaiting:false, isDialogOpen:false }, () => {
           this.fetchProduct(this.props.gallery.selectedCategory)
         })
-=======
-  
-    // Normalize data
-    this.updateProductByModel(this.props.gallery.selectedCategory, data.id, data.data, () => {
-      this.setState({ isOpenDialog:false }, () => {
-        this.fetchProduct(this.props.gallery.selectedCategory)
->>>>>>> master
       })
     })
   }
@@ -267,7 +240,6 @@ class Gallery extends React.Component {
         deleteItemId: tile.pid,
         onDialogPressOK: () => {
           // Delete the item
-<<<<<<< HEAD
           this.setState({ isDialogWaiting:true }, () => {
             this.deleteProductByModel(this.props.gallery.selectedCategory, this.state.deleteItemId, () => {
               this.setState({ isDialogWaiting:false, isOpenAlertDialog:false }, () => {
@@ -275,9 +247,6 @@ class Gallery extends React.Component {
               })
             })
           })
-=======
-          this.deleteProductByModel(this.props.gallery.selectedCategory, this.state.deleteItemId)
->>>>>>> master
         }
       }, () => {
         // Open alert dialog
@@ -289,11 +258,7 @@ class Gallery extends React.Component {
     }
   }
 
-<<<<<<< HEAD
   deleteProductByModel(product, id, callback) {
-=======
-  deleteProductByModel(product, id) {
->>>>>>> master
     const url = `/api/v1/product_${product && product.name ? product.name : ''}`;
     const data = { "method":"delete", "id": id }
     rFul.post(url, data, (err, data) => {
@@ -303,13 +268,9 @@ class Gallery extends React.Component {
       } else {
         // Show dialog
         console.log('Delete item success : ', data);
-<<<<<<< HEAD
         if(typeof callback === 'function') {
           callback()
         }
-=======
-        this.fetchProduct(this.props.gallery.selectedCategory)
->>>>>>> master
       }
     });
   }
@@ -384,11 +345,7 @@ class Gallery extends React.Component {
 
     if(!this.props.gallery.categories || (this.props.product && this.props.product.isAddedSuccess)) {
 
-<<<<<<< HEAD
       // Catch the event (sync with import product)
-=======
-      // Catch the event
->>>>>>> master
       this.setAddedItemStatus(false)
 
       // Get category list
@@ -533,7 +490,6 @@ class Gallery extends React.Component {
   
             <ReuseDialog 
               title={'Product'}
-<<<<<<< HEAD
               content={null}
               form={selectedProduct}
               isOpen={this.state.isDialogOpen} 
@@ -542,26 +498,14 @@ class Gallery extends React.Component {
               onOK={(data) => this.onSaveImageGallery(data)}
               optimize={(data) => this.onOptimizeSavingItem(data)}
               onClose={(isOpen) => { this.setState({ isDialogOpen:isOpen }) }}
-=======
-              isOpen={this.state.isOpenDialog} 
-              content={null}
-              form={selectedProduct}
-              onClose={(isOpen) => { this.setState({ isOpenDialog:isOpen }) }}
-              onOK={(data) => this.onSaveImageGallery(data)}
-              optimize={(data) => this.onOptimizeSavingItem(data)}
->>>>>>> master
             />
 
             { /** Alert dialog */ }
   
             <ReuseDialog 
-<<<<<<< HEAD
               title={'System'} 
               isWaiting={this.state.isDialogWaiting}
               loadingDescription={'Sync to server...'}
-=======
-              title={'System'}
->>>>>>> master
               isOpen={this.state.isOpenAlertDialog} 
               content={this.state.alertMsg}
               form={null}
@@ -580,12 +524,7 @@ class Gallery extends React.Component {
                   this.state.onDialogPressOK()
                 }
 
-<<<<<<< HEAD
                 // this.setState({ isOpenAlertDialog:false })
-=======
-                this.setState({ isOpenAlertDialog:false })
->>>>>>> master
-
               }}
             />
           
@@ -593,11 +532,7 @@ class Gallery extends React.Component {
       
         :  
           
-<<<<<<< HEAD
           <Loading hasContainer={true}/>
-=======
-          <Loading />
->>>>>>> master
       }
       </MenuComponent>
     )
