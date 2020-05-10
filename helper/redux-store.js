@@ -1,6 +1,7 @@
 import { 
     applyMiddleware, createStore, compose
 } from 'redux';
+import LogRocket from 'logrocket';
 
 import RootReducer from './reducer/index';
 
@@ -13,7 +14,8 @@ if(process.env.NODE_ENV=='development' || process.env.NODE_ENV=='local') {
 };
 
 const makeStore = (initialState, option) => {
-    return createStore(RootReducer, initialState, applyMiddleware(...middlewares));
+    // LogRocket middleware should go last
+    return createStore(RootReducer, initialState, applyMiddleware(...middlewares, LogRocket.reduxMiddleware()));
 };
 
 export { makeStore };

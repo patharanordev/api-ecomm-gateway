@@ -1,6 +1,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { connect } from 'react-redux';
+import LogRocket from 'logrocket';
 import RESTFul from '../helper/RESTFul';
 
 const MenuComponent = dynamic( import('../components/menu/Menu'), { ssr: false } )
@@ -13,6 +14,7 @@ class Dashboard extends React.Component {
     if(user) {
       console.log('Dashboard got response : ', user)
       store.dispatch({ type:'CURRENT_USER', payload:user });
+
       // return { currentUser:user }
     }
   }
@@ -26,6 +28,10 @@ class Dashboard extends React.Component {
       recentOrder: null,
       orderStatus: null
     }
+
+    LogRocket.init('zwj5lf/ecommadmin', {
+      release: process.env.APP_VERSION | 'undefined',
+    });
   }
 
   getRevenue() {
@@ -95,7 +101,7 @@ class Dashboard extends React.Component {
         "method":"create", 
         "data": {
           "username": user.currentUser.displayName,
-          "email": "",
+          "email": user.currentUser.email,
           "social_id": user.currentUser.sub,
           "provider": user.currentUser.provider,
           "picture": user.currentUser.picture,
@@ -105,6 +111,16 @@ class Dashboard extends React.Component {
         if(typeof callback === 'function') {
           callback(err, data);
         }
+      });
+
+      LogRocket.identify(`${user.currentUser.id}`, {
+        name: user.currentUser.displayName,
+        email: user.currentUser.email ? user.currentUser.email : 'unidentified',
+
+        // Add your own custom user variables here, ie:
+        user: user.currentUser.provider,
+        image: user.currentUser.picture,
+        language: user.currentUser.language
       });
     }
   }

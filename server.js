@@ -173,10 +173,15 @@ app.prepare()
         }
     });
 
+    // Scope : 
+    // - https://developers.google.com/identity/protocols/oauth2/scopes
+    // - https://github.com/mstade/passport-google-oauth2#what-you-will-get-in-profile-response-
     server.get('/login/google', 
         passport.authenticate('google', { 
-            scope: [ 'https://www.googleapis.com/auth/plus.login',
-                , 'https://www.googleapis.com/auth/plus.profile.emails.read' 
+            scope: [ 
+                'https://www.googleapis.com/auth/plus.login'
+                , 'https://www.googleapis.com/auth/plus.profile.emails.read'
+                , 'https://www.googleapis.com/auth/userinfo.email'
             ]
         })
     );

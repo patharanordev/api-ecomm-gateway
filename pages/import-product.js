@@ -3,6 +3,7 @@ import has from 'has';
 import dynamic from 'next/dynamic';
 import styled from 'styled-components';
 import { connect } from 'react-redux';
+import LogRocket from 'logrocket';
 import DeleteIcon from '@material-ui/icons/Delete';
 import {
   IconButton, Typography, Avatar,
@@ -49,6 +50,10 @@ class ImportProduct extends React.Component {
       selectedProduct: null,
       isWaiting: true
     }
+
+    LogRocket.init('zwj5lf/ecommadmin', {
+      release: process.env.APP_VERSION | 'undefined',
+    });
   }
 
   dispatch(action, callback) {

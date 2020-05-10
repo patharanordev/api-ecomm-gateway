@@ -18,6 +18,7 @@
           "displayName": true,
           "preprocess": false
         }
-      ]
+      ],
+      ["add-react-displayname"]
     ]
 }
