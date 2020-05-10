@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import has from 'has';
 import styled from 'styled-components';
 import { connect } from 'react-redux';
+import LogRocket from 'logrocket';
 import { Grid, Typography, Paper } from '@material-ui/core';
 import RESTFul from '../helper/RESTFul';
 
@@ -66,6 +67,10 @@ class Gallery extends React.Component {
       isWaiting: true,
       isDialogWaiting: false
     }
+
+    LogRocket.init('zwj5lf/ecommadmin', {
+      release: process.env.APP_VERSION | 'undefined',
+    });
   }
 
   dispatch(action, callback) {
@@ -218,6 +223,7 @@ class Gallery extends React.Component {
       // Normalize data
       this.updateProductByModel(this.props.gallery.selectedCategory, data.id, data.data, () => {
         this.setState({ isDialogWaiting:false, isDialogOpen:false }, () => {
+          this.setAddedItemStatus(true)
           this.fetchProduct(this.props.gallery.selectedCategory)
         })
       })

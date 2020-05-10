@@ -1,6 +1,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { connect } from 'react-redux';
+import LogRocket from 'logrocket';
 import RESTFul from '../helper/RESTFul';
 import Loading from '../components/Loading';
 
@@ -25,6 +26,10 @@ class Order extends React.Component {
       orderItems: null,
       isWaiting: true
     }
+
+    LogRocket.init('zwj5lf/ecommadmin', {
+      release: process.env.APP_VERSION | 'undefined',
+    });
   }
 
   wait(isWaiting, callback) { 

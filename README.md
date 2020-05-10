@@ -1,5 +1,5 @@
 # **eCommAdmin**
-[![version](https://img.shields.io/badge/version-v0.4.0-green.svg)](https://github.com/patharanordev/api-ecomm-gateway/commit/02bafca8f46c02edf31f873ef2e8cf07b7e1d2ae)
+[![version](https://img.shields.io/badge/version-v0.4.1-green.svg)](https://github.com/patharanordev/api-ecomm-gateway)
 
 eCommAdmin is a simple Dockerize monolithic application, handling authentication via Google passportjs with Node.js.
 
@@ -117,10 +117,15 @@ server.post('/api/v1/:name', (req, res) => {
 
 // ----- Set auth with Passport.js by using GoogleStrategy -----
 
+// Scope : 
+// - https://developers.google.com/identity/protocols/oauth2/scopes
+// - https://github.com/mstade/passport-google-oauth2#what-you-will-get-in-profile-response-
 server.get('/login/google', 
     passport.authenticate('google', { 
-        scope: [ 'https://www.googleapis.com/auth/plus.login',
-            , 'https://www.googleapis.com/auth/plus.profile.emails.read' 
+        scope: [ 
+            'https://www.googleapis.com/auth/plus.login'
+            , 'https://www.googleapis.com/auth/plus.profile.emails.read'
+            , 'https://www.googleapis.com/auth/userinfo.email'
         ]
     })
 );
@@ -180,6 +185,7 @@ Bind port to outsite(left) via port number `3000`.
 ```bash
 $ docker run \
 -p 3000:3000 \
+-e APP_VERSION=0.4.0 \
 -e GOOGLE_APP_ID=YOUR_GOOGLE_APP_ID \
 -e GOOGLE_APP_SECRET=YOUR_GOOGLE_APP_SECRET \
 -e HOST=YOUR_HOST \

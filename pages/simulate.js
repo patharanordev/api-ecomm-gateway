@@ -2,6 +2,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import has from 'has';
 import { connect } from 'react-redux';
+import LogRocket from 'logrocket';
 import { Grid } from '@material-ui/core';
 import RESTFul from '../helper/RESTFul';
 
@@ -55,6 +56,10 @@ class Simulate extends React.Component {
       isWaiting: true,
       isDialogWaiting: false
     }
+
+    LogRocket.init('zwj5lf/ecommadmin', {
+      release: process.env.APP_VERSION | 'undefined',
+    });
   }
 
   dispatch(action, callback) {

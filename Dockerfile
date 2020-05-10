@@ -1,6 +1,6 @@
 FROM node:12.16.1-alpine3.9
 
-LABEL version="0.4.0"
+LABEL version="0.4.1"
 LABEL maintainer="patharanor@gmail.com"
 
 WORKDIR /app

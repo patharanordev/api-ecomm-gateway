@@ -1,6 +1,6 @@
 {
   "name": "app-ecomm-admin",
-  "version": "1.0.0",
+  "version": "0.4.1",
   "description": "",
   "main": "server.js",
   "scripts": {
@@ -20,6 +20,7 @@
     "@material-ui/lab": "^4.0.0-alpha.51",
     "@zeit/next-css": "^1.0.1",
     "axios": "^0.19.2",
+    "babel-plugin-add-react-displayname": "0.0.5",
     "body-parser": "^1.19.0",
     "clsx": "latest",
     "compression": "^1.7.4",
@@ -32,6 +33,8 @@
     "express-session": "^1.17.1",
     "has": "^1.0.3",
     "humanize-string": "^2.1.0",
+    "logrocket": "^1.0.7",
+    "logrocket-react": "^4.0.1",
     "moment": "^2.24.0",
     "morgan": "^1.10.0",
     "next": "^9.3.6",
