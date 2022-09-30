@@ -49,7 +49,7 @@
     "react-dom": "^16.12.0",
     "react-number-format": "^4.4.1",
     "react-redux": "^7.2.0",
-    "recharts": "^1.8.5",
+    "recharts": "^2.1.14",
     "recompose": "^0.30.0",
     "redux": "^4.0.5",
     "redux-logger": "^3.0.6",
